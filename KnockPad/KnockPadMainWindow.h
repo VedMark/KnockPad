@@ -43,6 +43,7 @@ private:
     void createFileActions();
     void createFileMenu();
     void createEditActions();
+    void createWidget(QWidget* );
     void createEditMenu();
     void createToolBar();
     void createContextMenu();
