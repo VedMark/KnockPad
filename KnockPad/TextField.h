@@ -3,7 +3,7 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsView>
-#include <QWidget>
+//#include <QWidget>
 
 class TextField : public QGraphicsView
 {

@@ -7,9 +7,9 @@ KnockPadMainWindow::KnockPadMainWindow(QWidget *parent)
     this->createMenu();
     this->createToolBar();
     this->createContextMenu();
-    this->createTextField();
+    //this->createTextField();
 
-    setCursor(Qt::IBeamCursor);
+
     //this->setWindowIcon();
 }
 
@@ -18,15 +18,10 @@ KnockPadMainWindow::~KnockPadMainWindow()
     delete fileMenu;
     delete contextMenu;
     delete editMenu;
-    delete fontTypeAction;
-    delete fontSizeAction;
-
-    delete sizeMenu;
-    delete fontMenu;
 
     delete toolBar;
 
-    delete textField;
+    //delete textField;
 }
 
 void KnockPadMainWindow::createMenu()
@@ -34,23 +29,16 @@ void KnockPadMainWindow::createMenu()
     this->fileMenu = menuBar()->addMenu("&file");
     menuComponents.addFileActions(this->fileMenu);
 
-    this->contextMenu->addSeparator();
+    this->fileMenu->addSeparator();
     menuComponents.addRecentFilesActions(this->fileMenu);
     this->fileMenu->addSeparator();
     menuComponents.addExitAction(this->fileMenu);
 
     this->editMenu = menuBar()->addMenu("&edit");
     menuComponents.addEditActions(this->editMenu);
-    this->contextMenu->addSeparator();
-    this->fontMenu = new QMenu("&Font", this->editMenu);
-    this->editMenu->addMenu(this->fontMenu);
-    this->fontMenu->addAction(this->fontTypeAction);
+    this->fileMenu->addSeparator();
+    menuComponents.addDropDawnFontActions(this->editMenu);
 
-    this->sizeMenu = new QMenu("&Size", this->editMenu);
-    this->editMenu->addMenu(this->sizeMenu);
-    this->sizeMenu->addAction(this->fontSizeAction);
-
-    menuComponents.addFontActions(this->editMenu);
 }
 
 void KnockPadMainWindow::createToolBar()
@@ -58,8 +46,10 @@ void KnockPadMainWindow::createToolBar()
     this->toolBar = new QToolBar(this);
     this->toolBar->resize(600, 50);
 
+    menuComponents.addFileActions(this->toolBar);
+    this->toolBar->addSeparator();
     menuComponents.addEditActions(this->toolBar);
-    this->contextMenu->addSeparator();
+    this->toolBar->addSeparator();
     menuComponents.addFontActions(this->toolBar);
 
 }
@@ -72,9 +62,7 @@ void KnockPadMainWindow::createContextMenu()
     this->contextMenu->addSeparator();
     menuComponents.addEditActions(this->contextMenu);
     this->contextMenu->addSeparator();
-    menuComponents.addFontActions(this->contextMenu);
-
-    //connect(this->contextMenu, SIGNAL( triggered(QAction*) ), SLOT( slotActivated(QAction*) ) );
+    menuComponents.addDropDawnFontActions(this->contextMenu);
 }
 
 void KnockPadMainWindow::createTextField()
@@ -90,9 +78,3 @@ void KnockPadMainWindow::contextMenuEvent(QContextMenuEvent* mouse_pointer)
 {
     this->contextMenu->exec(mouse_pointer->globalPos());
 }
-/*
-void KnockPadMainWindow::slotActivated(QAction* pAction)
-{
-    qDebug() << "ContextMenu activated";
-}
-*/

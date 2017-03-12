@@ -2,8 +2,9 @@
 #define MENUCOMPONENTS_H
 
 #include <QAction>
-#include <QWidget>
-#include "PublicSlots.h"
+#include <QtCore>
+#include <QMenu>
+//#include <QWidget>
 
 class MenuComponents : public QWidget
 {
@@ -17,24 +18,25 @@ public:
     void addRecentFilesActions(QWidget *menu);
     void addEditActions(QWidget *menu);
     void addFontActions(QWidget *menu);
+    void addDropDawnFontActions(QMenu *menu);
     void addExitAction(QWidget *menu);
 
 public slots:
-    static void createNewFile();
-    static void showOpenMenu();
-    static void saveInCurrentFile();
-    static void showSaveMenu();
-    static void openRecentFile();
+    void createNewFile();
+    void showOpenMenu();
+    void saveInCurrentFile();
+    void showSaveMenu();
+    void openRecentFile();
 
-    static void cutText();
-    static void copyText();
-    static void pasteText();
-    static void deleteText();
+    void cutText();
+    void copyText();
+    void pasteText();
+    void deleteText();
 
-    static void changeFontType();
-    static void changeFontSize();
-    static void setBoldText();
-    static void setItalicText();
+    void changeFontType();
+    void changeFontSize();
+    void setBoldText();
+    void setItalicText();
 private:
     enum { MAX_RECENT_FILES = 5 };
 
@@ -54,6 +56,11 @@ private:
     QAction *pasteAction;
     QAction *deleteAction;
 
+    QMenu *fontTypeMenu;
+    QMenu *fontSizeMenu;
+
+    QAction *fontTypeAction;
+    QAction *fontSizeAction;
     QAction *fontBoldAction;
     QAction *fontItalicAction;
 };

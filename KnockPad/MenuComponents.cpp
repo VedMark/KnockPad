@@ -4,8 +4,10 @@ MenuComponents::MenuComponents(QWidget *parent)
     : QWidget(parent)
 {
     createFileActions();
-    //createEditActions();
-    //createFontActions();
+    createEditActions();
+    createFontActions();
+    this->fontTypeMenu = new QMenu("&Font", this);
+    this->fontSizeMenu = new QMenu("&Size", this);
 }
 
 MenuComponents::~MenuComponents()
@@ -23,6 +25,11 @@ MenuComponents::~MenuComponents()
     delete pasteAction;
     delete deleteAction;
 
+    delete fontTypeMenu;
+    delete fontSizeMenu;
+
+    delete fontTypeAction;
+    delete fontSizeAction;
     delete fontBoldAction;
     delete fontItalicAction;
 
@@ -84,21 +91,22 @@ void MenuComponents::createEditActions()
     this->deleteAction->setShortcut(QKeySequence::Delete);
     connect(this->deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
 }
-/*
+
 void MenuComponents::createFontActions()
 {
     this->fontTypeAction = new QAction("&Font", this);
-    connect(this->fontTypeAction, SIGNAL( triggered() ), SLOT( MenuComponents::changeFontType() ) );
+    connect(this->fontTypeAction, SIGNAL( triggered() ), SLOT( changeFontType() ) );
 
     this->fontSizeAction = new QAction("&Size", this);
-    connect(this->fontSizeAction, SIGNAL( triggered() ), SLOT( MenuComponents::changeFontSize() ) );
+    connect(this->fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
 
     this->fontBoldAction = new QAction("&Bold", this);
-    connect(this->fontBoldAction, SIGNAL( triggered() ), SLOT( MenuComponents::setBoldText() ) );
+    connect(this->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
 
     this->fontItalicAction = new QAction("&Italics", this);
-    connect(this->fontItalicAction, SIGNAL( triggered() ), SLOT( MenuComponents::setItalicText() ) );
-}*/
+    connect(this->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
+
+}
 
 void MenuComponents::addFileActions(QWidget *menu)
 {
@@ -110,14 +118,24 @@ void MenuComponents::addFileActions(QWidget *menu)
 
 void MenuComponents::addEditActions(QWidget *menu)
 {
-    menu->addAction(cutAction);
-    menu->addAction(copyAction);
-    menu->addAction(pasteAction);
-    menu->addAction(deleteAction);
+    menu->addAction(this->cutAction);
+    menu->addAction(this->copyAction);
+    menu->addAction(this->pasteAction);
+    menu->addAction(this->deleteAction);
 }
 
 void MenuComponents::addFontActions(QWidget *menu)
 {
+    menu->addAction(this->fontTypeAction);
+    menu->addAction(this->fontSizeAction);
+    menu->addAction(this->fontBoldAction);
+    menu->addAction(this->fontItalicAction);
+}
+
+void MenuComponents::addDropDawnFontActions(QMenu *menu)
+{
+    menu->addMenu(this->fontTypeMenu);
+    menu->addMenu(this->fontSizeMenu);
     menu->addAction(this->fontBoldAction);
     menu->addAction(this->fontItalicAction);
 }
