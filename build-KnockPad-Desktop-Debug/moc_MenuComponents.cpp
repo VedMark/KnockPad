@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_MenuComponents_t {
-    QByteArrayData data[15];
-    char stringdata[184];
+    QByteArrayData data[1];
+    char stringdata[16];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -29,28 +29,9 @@ struct qt_meta_stringdata_MenuComponents_t {
     )
 static const qt_meta_stringdata_MenuComponents_t qt_meta_stringdata_MenuComponents = {
     {
-QT_MOC_LITERAL(0, 0, 14),
-QT_MOC_LITERAL(1, 15, 13),
-QT_MOC_LITERAL(2, 29, 0),
-QT_MOC_LITERAL(3, 30, 12),
-QT_MOC_LITERAL(4, 43, 17),
-QT_MOC_LITERAL(5, 61, 12),
-QT_MOC_LITERAL(6, 74, 14),
-QT_MOC_LITERAL(7, 89, 7),
-QT_MOC_LITERAL(8, 97, 8),
-QT_MOC_LITERAL(9, 106, 9),
-QT_MOC_LITERAL(10, 116, 10),
-QT_MOC_LITERAL(11, 127, 14),
-QT_MOC_LITERAL(12, 142, 14),
-QT_MOC_LITERAL(13, 157, 11),
-QT_MOC_LITERAL(14, 169, 13)
+QT_MOC_LITERAL(0, 0, 14)
     },
-    "MenuComponents\0createNewFile\0\0"
-    "showOpenMenu\0saveInCurrentFile\0"
-    "showSaveMenu\0openRecentFile\0cutText\0"
-    "copyText\0pasteText\0deleteText\0"
-    "changeFontType\0changeFontSize\0setBoldText\0"
-    "setItalicText\0"
+    "MenuComponents\0"
 };
 #undef QT_MOC_LITERAL
 
@@ -60,67 +41,21 @@ static const uint qt_meta_data_MenuComponents[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-      13,   14, // methods
+       0,    0, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
        0,       // signalCount
 
- // slots: name, argc, parameters, tag, flags
-       1,    0,   79,    2, 0x0a,
-       3,    0,   80,    2, 0x0a,
-       4,    0,   81,    2, 0x0a,
-       5,    0,   82,    2, 0x0a,
-       6,    0,   83,    2, 0x0a,
-       7,    0,   84,    2, 0x0a,
-       8,    0,   85,    2, 0x0a,
-       9,    0,   86,    2, 0x0a,
-      10,    0,   87,    2, 0x0a,
-      11,    0,   88,    2, 0x0a,
-      12,    0,   89,    2, 0x0a,
-      13,    0,   90,    2, 0x0a,
-      14,    0,   91,    2, 0x0a,
-
- // slots: parameters
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-    QMetaType::Void,
-
        0        // eod
 };
 
 void MenuComponents::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
-    if (_c == QMetaObject::InvokeMetaMethod) {
-        MenuComponents *_t = static_cast<MenuComponents *>(_o);
-        switch (_id) {
-        case 0: _t->createNewFile(); break;
-        case 1: _t->showOpenMenu(); break;
-        case 2: _t->saveInCurrentFile(); break;
-        case 3: _t->showSaveMenu(); break;
-        case 4: _t->openRecentFile(); break;
-        case 5: _t->cutText(); break;
-        case 6: _t->copyText(); break;
-        case 7: _t->pasteText(); break;
-        case 8: _t->deleteText(); break;
-        case 9: _t->changeFontType(); break;
-        case 10: _t->changeFontSize(); break;
-        case 11: _t->setBoldText(); break;
-        case 12: _t->setItalicText(); break;
-        default: ;
-        }
-    }
+    Q_UNUSED(_o);
+    Q_UNUSED(_id);
+    Q_UNUSED(_c);
     Q_UNUSED(_a);
 }
 
@@ -148,15 +83,6 @@ int MenuComponents::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     _id = QWidget::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
-    if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 13)
-            qt_static_metacall(this, _c, _id, _a);
-        _id -= 13;
-    } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 13)
-            *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 13;
-    }
     return _id;
 }
 QT_END_MOC_NAMESPACE

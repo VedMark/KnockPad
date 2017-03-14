@@ -60,7 +60,7 @@ void TextField::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
 }
 
 const QMetaObject TextField::staticMetaObject = {
-    { &QGraphicsView::staticMetaObject, qt_meta_stringdata_TextField.data,
+    { &QWidget::staticMetaObject, qt_meta_stringdata_TextField.data,
       qt_meta_data_TextField,  qt_static_metacall, 0, 0}
 };
 
@@ -75,12 +75,12 @@ void *TextField::qt_metacast(const char *_clname)
     if (!_clname) return 0;
     if (!strcmp(_clname, qt_meta_stringdata_TextField.stringdata))
         return static_cast<void*>(const_cast< TextField*>(this));
-    return QGraphicsView::qt_metacast(_clname);
+    return QWidget::qt_metacast(_clname);
 }
 
 int TextField::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QGraphicsView::qt_metacall(_c, _id, _a);
+    _id = QWidget::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     return _id;

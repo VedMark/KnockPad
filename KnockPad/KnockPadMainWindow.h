@@ -2,13 +2,14 @@
 #define KNOCKPADMAINWINDOW_H
 
 #include <QApplication>
-//#include <QtCore>
-//#include <QtGui>
+#include <QtCore>
+#include <QtGui>
 #include <QContextMenuEvent>
 #include <QWidget>
 #include <QMainWindow>
 //#include <QMenu>
 #include <QMenuBar>
+#include <QPalette>
 #include <QToolBar>
 
 #include "MenuComponents.h"
@@ -22,6 +23,11 @@ public:
     KnockPadMainWindow(QWidget *parent = 0);
     ~KnockPadMainWindow();
 
+    void createMenu(MenuComponents *menuComponents);
+    void createToolBar(MenuComponents *menuComponents);
+    void createContextMenu(MenuComponents *menuComponents);
+    void createTextField(TextField *textField);
+
 signals:
 
 public slots:
@@ -30,19 +36,10 @@ protected:
      virtual void contextMenuEvent(QContextMenuEvent* pe);
 
 private:
-    void createMenu();
-    void createToolBar();
-    void createContextMenu();
-    void createTextField();
-
-    MenuComponents menuComponents;
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *contextMenu;
-
     QToolBar *toolBar;
-
-    TextField *textField;
 };
 
 #endif

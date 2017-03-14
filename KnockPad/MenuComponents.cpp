@@ -40,33 +40,28 @@ void MenuComponents::createFileActions()
     this->newAction = new QAction("&New", this);
     this->newAction->setIcon(QIcon(":/images/new.png"));
     this->newAction->setShortcut(QKeySequence::New);
-    connect(this->newAction, SIGNAL( triggered() ), SLOT( createNewFile() ) );
 
     this->openAction = new QAction("&Open", this);
     this->openAction->setIcon(QIcon(":/images/open.png"));
     this->openAction->setShortcut(QKeySequence::Open);
-    connect(this->openAction, SIGNAL( triggered() ), SLOT( showOpenMenu() ) );
 
     this->saveAction = new QAction("&Save", this);
     this->saveAction->setIcon(QIcon(":/images/save.png"));
     this->saveAction->setShortcut(Qt::CTRL + Qt::Key_S);
     this->saveAction->setStatusTip("Save in current file");
-    connect(this->saveAction, SIGNAL( triggered() ), SLOT( saveInCurrentFile() ) );
 
     this->saveAsAction = new QAction("&Save As", this);
     this->saveAsAction->setShortcut(QKeySequence::SaveAs);
-    connect(this->saveAsAction, SIGNAL( triggered() ), SLOT( showSaveMenu() ) );
 
     for(int i = 0; i < MAX_RECENT_FILES; ++i)
     {
         this->recentFileActions[i] = new QAction(this);
         this->recentFileActions[i]->setVisible(false);
-        connect(this->recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
     }
 
     this->exitAction = new QAction("&Exit", this);
     this->exitAction->setShortcut(QKeySequence::Quit);
-    connect(this->exitAction, SIGNAL( triggered() ), SLOT( close() ) );
+
 }
 
 void MenuComponents::createEditActions()
@@ -74,37 +69,26 @@ void MenuComponents::createEditActions()
     this->cutAction = new QAction("&Cut", this);
     this->cutAction->setIcon(QIcon(":/images/cut.png"));
     this->cutAction->setShortcut(QKeySequence::Cut);
-    connect(this->cutAction, SIGNAL( triggered() ), SLOT( cutText() ) );
 
     this->copyAction = new QAction("&Copy", this);
     this->copyAction->setIcon(QIcon(":/images/copy.png"));
     this->copyAction->setShortcut(QKeySequence::Copy);
-    connect(this->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
 
     this->pasteAction = new QAction("&Paste", this);
     this->pasteAction->setIcon(QIcon(":/images/paste.png"));
     this->pasteAction->setShortcut(Qt::CTRL + Qt::Key_V);
-    connect(this->saveAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
 
     this->deleteAction = new QAction("&Delete", this);
     this->deleteAction->setIcon(QIcon(":/images/delete.png"));
     this->deleteAction->setShortcut(QKeySequence::Delete);
-    connect(this->deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
 }
 
 void MenuComponents::createFontActions()
 {
     this->fontTypeAction = new QAction("&Font", this);
-    connect(this->fontTypeAction, SIGNAL( triggered() ), SLOT( changeFontType() ) );
-
     this->fontSizeAction = new QAction("&Size", this);
-    connect(this->fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
-
     this->fontBoldAction = new QAction("&Bold", this);
-    connect(this->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
-
     this->fontItalicAction = new QAction("&Italics", this);
-    connect(this->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
 }
 
@@ -150,68 +134,3 @@ void MenuComponents::addExitAction(QWidget *menu)
 {
     menu->addAction(this->exitAction);
 }
-void MenuComponents::createNewFile()
-{
-    qDebug() << "createNewFile";
-}
-
-void MenuComponents::showOpenMenu()
-{
-    qDebug() << "showOpenMenu";
-}
-
-void MenuComponents::saveInCurrentFile()
-{
-    qDebug() << "saveInCurrentFile";
-}
-
-void MenuComponents::showSaveMenu()
-{
-    qDebug() << "showSaveMenu";
-}
-
-void MenuComponents::openRecentFile()
-{
-    qDebug() << "openRecentFile";
-}
-
-void MenuComponents::cutText()
-{
-    qDebug() << "cutText";
-}
-
-void MenuComponents::copyText()
-{
-    qDebug() << "copyText";
-}
-
-void MenuComponents::pasteText()
-{
-    qDebug() << "pasteText";
-}
-
-void MenuComponents::deleteText()
-{
-    qDebug() << "deleteText";
-}
-
-void MenuComponents::changeFontType()
-{
-    qDebug() << "changeFontType";
-}
-
-void MenuComponents::changeFontSize()
-{
-    qDebug() << "changeFontSize";
-}
-
-void MenuComponents::setBoldText()
-{
-    qDebug() << "setBoldText";
-}
-
-void MenuComponents::setItalicText()
-{
-    qDebug() << "setItalicText";
-}
-

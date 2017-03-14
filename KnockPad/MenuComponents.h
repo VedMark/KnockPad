@@ -3,8 +3,9 @@
 
 #include <QAction>
 #include <QtCore>
+#include <QFileDialog>
 #include <QMenu>
-//#include <QWidget>
+#include <QDialog>
 
 class MenuComponents : public QWidget
 {
@@ -21,28 +22,7 @@ public:
     void addDropDawnFontActions(QMenu *menu);
     void addExitAction(QWidget *menu);
 
-public slots:
-    void createNewFile();
-    void showOpenMenu();
-    void saveInCurrentFile();
-    void showSaveMenu();
-    void openRecentFile();
-
-    void cutText();
-    void copyText();
-    void pasteText();
-    void deleteText();
-
-    void changeFontType();
-    void changeFontSize();
-    void setBoldText();
-    void setItalicText();
-private:
     enum { MAX_RECENT_FILES = 5 };
-
-    void createFileActions();
-    void createEditActions();
-    void createFontActions();
 
     QAction *newAction;
     QAction *openAction;
@@ -56,13 +36,20 @@ private:
     QAction *pasteAction;
     QAction *deleteAction;
 
-    QMenu *fontTypeMenu;
-    QMenu *fontSizeMenu;
-
     QAction *fontTypeAction;
     QAction *fontSizeAction;
     QAction *fontBoldAction;
     QAction *fontItalicAction;
+
+public slots:
+
+private:
+    void createFileActions();
+    void createEditActions();
+    void createFontActions();
+
+    QMenu *fontTypeMenu;
+    QMenu *fontSizeMenu;
 };
 
 #endif

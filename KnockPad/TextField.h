@@ -3,18 +3,25 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsView>
+#include <QRectF>
+#include <QWidget>
+#include <QHBoxLayout>
 //#include <QWidget>
 
-class TextField : public QGraphicsView
+class TextField : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit TextField(QWidget *parent = 0, qreal left = 0, qreal top = 0, qreal width = 800, qreal height = 600);
+    explicit TextField(QWidget *parent = 0);
+    ~TextField();
+
+protected:
+    void paintEvent(QPaintEvent *);
 
 private:
-    QGraphicsScene scene;
-    QGraphicsView view;
+    QHBoxLayout layout;
+    QPainter *painter;
 };
 
 #endif
