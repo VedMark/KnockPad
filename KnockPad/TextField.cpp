@@ -2,24 +2,18 @@
 
 TextField::TextField(QWidget *parent)
     : QWidget(parent)
-{
-    this->painter = new QPainter(this);
-    this->setGeometry(100, 100, 200, 200);
-    this->setVisible(true);
-    this->show();
-    setCursor(Qt::IBeamCursor);
-}
+{}
 
 TextField::~TextField()
 {
 }
 
-void TextField::paintEvent(QPaintEvent * paintEvent)
+void TextField::setView(Qt::GlobalColor color)
 {
-    QSize sz = size();
-    sz.width();
-    sz.height();
-    QBrush brush(Qt::white);
-    painter->setBrush( brush );
-}
+    QPalette pal = QPalette(this->palette());
+    pal.setBrush(backgroundRole(), QBrush(color));
+    this->setPalette(pal);
+    this->setAutoFillBackground(true);
 
+    this->setCursor(Qt::IBeamCursor);
+}

@@ -12,7 +12,7 @@ class MenuComponents : public QWidget
     Q_OBJECT
 
 public:
-    explicit MenuComponents(QWidget *parent = 0);
+    explicit MenuComponents(QWidget *parent = Q_NULLPTR);
     ~MenuComponents();
 
     void addFileActions(QWidget *menu);

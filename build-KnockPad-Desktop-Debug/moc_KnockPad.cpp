@@ -124,7 +124,7 @@ void KnockPad::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, vo
 }
 
 const QMetaObject KnockPad::staticMetaObject = {
-    { &QApplication::staticMetaObject, qt_meta_stringdata_KnockPad.data,
+    { &QMainWindow::staticMetaObject, qt_meta_stringdata_KnockPad.data,
       qt_meta_data_KnockPad,  qt_static_metacall, 0, 0}
 };
 
@@ -139,12 +139,12 @@ void *KnockPad::qt_metacast(const char *_clname)
     if (!_clname) return 0;
     if (!strcmp(_clname, qt_meta_stringdata_KnockPad.stringdata))
         return static_cast<void*>(const_cast< KnockPad*>(this));
-    return QApplication::qt_metacast(_clname);
+    return QMainWindow::qt_metacast(_clname);
 }
 
 int KnockPad::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
-    _id = QApplication::qt_metacall(_c, _id, _a);
+    _id = QMainWindow::qt_metacall(_c, _id, _a);
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {

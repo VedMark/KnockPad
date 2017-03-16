@@ -1,7 +1,11 @@
 #include "KnockPad.h"
+#include <QSizePolicy>
 
 int main(int argc, char *argv[])
 {
-    KnockPad knock_pad(argc, argv);
-    return knock_pad.exec();
+    QApplication app(argc, argv);
+    KnockPad knock_pad;
+    knock_pad.show();
+
+    return app.exec();
 }

@@ -24,14 +24,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += main.cpp\
-        KnockPadMainWindow.cpp \
     MenuComponents.cpp \
     TextField.cpp \
-    KnockPad.cpp
+    KnockPad.cpp \
+    Menu.cpp \
+    EditToolBar.cpp
 
 RESOURCES += icons.qrc
 
-HEADERS  += KnockPadMainWindow.h \
+HEADERS  += \
     MenuComponents.h \
     TextField.h \
-    KnockPad.h
+    KnockPad.h \
+    Menu.h \
+    EditToolBar.h

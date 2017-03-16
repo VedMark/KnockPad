@@ -7,23 +7,24 @@
 #include <QTextEdit>
 #include <QMessageBox>
 #include <QWidget>
-
 #include <QAction>
 #include <QtCore>
 #include <QFileDialog>
-#include <QMenu>
-#include <QDialog>
+#include <QtGui>
+#include <QContextMenuEvent>
+#include <QMainWindow>
 
-#include "KnockPadMainWindow.h"
-#include "MenuComponents.h"
+#include "Menu.h"
+#include "EditToolBar.h"
 #include "TextField.h"
 
-class KnockPad : public QApplication
+class KnockPad : public QMainWindow
 {
     Q_OBJECT
 
+
 public:
-    explicit KnockPad(int argc, char **argv);
+    explicit KnockPad();
     ~KnockPad();
 
 public slots:
@@ -43,16 +44,29 @@ public slots:
     void setBoldText();
     void setItalicText();
 
+signals:
+
+protected:
+    virtual void contextMenuEvent(QContextMenuEvent* pe);
+
 private:
     bool maybeSave();
     void setCurrentFileName(const QString &fileName);
 
-    KnockPadMainWindow mainWindow;
-    MenuComponents menuComponents;
+    MenuComponents *menuComponents;
+    Menu *menu;
+    EditToolBar *editToolBar;
+
     TextField *textField;
 
     QString currentFileName;
     QTextEdit textEdit;
+    QScrollArea *scrollArea;
+
+
+
+    QScrollBar *hBar;
+    QScrollBar *vBar;
 };
 
 #endif

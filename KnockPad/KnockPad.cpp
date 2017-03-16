@@ -1,40 +1,68 @@
 #include "KnockPad.h"
 
-KnockPad::KnockPad(int argc, char **argv)
-    : QApplication(argc, argv)
+KnockPad::KnockPad() : QMainWindow()
 {
-    textField = new TextField(&mainWindow);
-    mainWindow.createMenu(&this->menuComponents);
-    mainWindow.createToolBar(&this->menuComponents);
-    mainWindow.createContextMenu(&this->menuComponents);
-    mainWindow.createTextField(this->textField);
+    menuComponents = new MenuComponents;
 
-    connect(this->menuComponents.newAction, SIGNAL( triggered() ), SLOT( createNewFile() ) );
-    connect(this->menuComponents.openAction, SIGNAL( triggered() ), SLOT( showOpenMenu() ) );
-    connect(this->menuComponents.saveAction, SIGNAL( triggered() ), SLOT( saveInCurrentFile() ) );
-    connect(this->menuComponents.saveAsAction, SIGNAL( triggered() ), SLOT( showSaveMenu() ) );
+    menu = new Menu(menuComponents, this);
+    setMenuBar(menu);
+
+    editToolBar = new EditToolBar(menuComponents, this);
+    addToolBar(editToolBar);
+
+    this->textField = new TextField(this);
+    setCentralWidget(textField);
+    this->textField->setView(Qt::white);
+
+/*
+    scrollArea = new QScrollArea(this);
+    scrollArea->setGeometry(50, 50, 1208, 650);
+    scrollArea->setViewport(this->textField);
+    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+*/
+    connect(menuComponents->newAction, SIGNAL( triggered() ), SLOT( createNewFile() ) );
+    connect(menuComponents->openAction, SIGNAL( triggered() ), SLOT( showOpenMenu() ) );
+    connect(menuComponents->saveAction, SIGNAL( triggered() ), SLOT( saveInCurrentFile() ) );
+    connect(menuComponents->saveAsAction, SIGNAL( triggered() ), SLOT( showSaveMenu() ) );
     for(int i = 0; i < MenuComponents::MAX_RECENT_FILES; ++i)
-        connect(this->menuComponents.recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
-    // TODO: add normal exit()
-    //connect(this->menuComponents.exitAction, SIGNAL( triggered() ), &this->mainWindow, SLOT( Quit() ) );
-    connect(this->menuComponents.cutAction, SIGNAL( triggered() ), SLOT( cutText() ) );
-    connect(this->menuComponents.copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
-    connect(this->menuComponents.pasteAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
-    connect(this->menuComponents.deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
-    connect(this->menuComponents.fontTypeAction, SIGNAL( triggered() ), SLOT( changeFontType() ) );
-    connect(this->menuComponents.fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
-    connect(this->menuComponents.fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
-    connect(this->menuComponents.fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
+        connect(menuComponents->recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
+    connect(menuComponents->exitAction, SIGNAL( triggered() ), SLOT( close() ) );
+    connect(menuComponents->cutAction, SIGNAL( hovered() ), SLOT( cutText() ) );
+    connect(menuComponents->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
+    connect(menuComponents->pasteAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
+    connect(menuComponents->deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
+    connect(menuComponents->fontTypeAction, SIGNAL( triggered() ), SLOT( changeFontType() ) );
+    connect(menuComponents->fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
+    connect(menuComponents->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
+    connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
-    this->mainWindow.setWindowTitle("KnockPad");
+    this->setWindowTitle("KnockPad");
 
-    this->mainWindow.resize(1366, 768);
-    this->mainWindow.show();
+    this->resize(1366, 768);
+    this->show();
 }
 
 KnockPad::~KnockPad()
 {
-    delete this->textField;
+    delete menuComponents;\
+    delete menu;
+    delete editToolBar;
+    delete textField;
+}
+
+void KnockPad::contextMenuEvent(QContextMenuEvent* mouse_pointer)
+{
+    menu->getContextMenu()->exec(mouse_pointer->globalPos());
+}
+
+void KnockPad::createNewFile()
+{
+    if(maybeSave())
+    {
+        textEdit.clear();
+        //setCurrentFileName(QString());
+    }
 }
 
 bool KnockPad::maybeSave()
@@ -48,7 +76,7 @@ bool KnockPad::maybeSave()
        //                         tr("The document has been modified.\n"
          //                          "Do you want to save your changes?"),
            //                     QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-     QMessageBox::warning(&this->mainWindow, tr("text"), tr("text2"));
+     QMessageBox::warning(this, tr("text"), tr("text2"));
      if (ret == QMessageBox::Save)
          return true;//fileSave();
      else if (ret == QMessageBox::Cancel)
@@ -69,15 +97,6 @@ void KnockPad::setCurrentFileName(const QString &fileName)
 
     //setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Rich Text")));
     //setWindowModified();
-}
-
-void KnockPad::createNewFile()
-{
-    if(maybeSave())
-    {
-        textEdit.clear();
-        //setCurrentFileName(QString());
-    }
 }
 
 void KnockPad::showOpenMenu()
