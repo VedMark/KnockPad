@@ -29,8 +29,8 @@ signals:
     void sign();
 
 protected:
-    //void paintEvent(QPaintEvent *);
-    //void mousePressEvent(QPaintEvent *);
+    void paintEvent(QPaintEvent *);
+    void mousePressEvent(QPaintEvent *);
 
 private:
     QWidget *field;

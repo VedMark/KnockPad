@@ -28,7 +28,9 @@ SOURCES += main.cpp\
     TextField.cpp \
     KnockPad.cpp \
     Menu.cpp \
-    EditToolBar.cpp
+    EditToolBar.cpp \
+    StatusBar.cpp \
+    Carriage.cpp
 
 RESOURCES += icons.qrc
 
@@ -37,4 +39,6 @@ HEADERS  += \
     TextField.h \
     KnockPad.h \
     Menu.h \
-    EditToolBar.h
+    EditToolBar.h \
+    StatusBar.h \
+    Carriage.h

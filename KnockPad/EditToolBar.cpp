@@ -8,10 +8,6 @@ EditToolBar::EditToolBar(MenuComponents *components, QWidget *parent)
     createToolBar();
 }
 
-EditToolBar::~EditToolBar()
-{
-}
-
 void EditToolBar::createToolBar()
 {
     components->addFileActions(this);

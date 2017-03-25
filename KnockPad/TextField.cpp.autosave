@@ -40,3 +40,27 @@ bool TextField::writeFile(const QString &fileName)
 {
 
 }
+
+void TextField::mousePressEvent(QMouseEvent * event)
+{
+    _blink = false;
+    viewport()->update();
+    qint64 cPos = cursorPosition(event->pos());
+    if (cPos >= 0)
+    {
+        resetSelection(cPos);
+        setCursorPosition(cPos);
+    }
+}
+
+void TextField::paintEvent(QPaintEvent *paintEvent)
+{
+    QPainter painter(viewport());
+    viewport()->update();
+    if(agreedToContinue()){
+        //writeSettings();
+        closeEvent->accept();
+    }
+    else
+        closeEvent->ignore();
+}

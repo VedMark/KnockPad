@@ -10,24 +10,23 @@ KnockPad::KnockPad() : QMainWindow()
     editToolBar = new EditToolBar(menuComponents, this);
     addToolBar(editToolBar);
 
-    this->textField = new TextField(this);
-    setCentralWidget(textField);
-    this->textField->setView(Qt::white);
+    statusBar = new StatusBar(this);
+    setStatusBar(statusBar);
 
-/*
-    scrollArea = new QScrollArea(this);
-    scrollArea->setGeometry(50, 50, 1208, 650);
-    scrollArea->setViewport(this->textField);
-    scrollArea->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    scrollArea->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-*/
-    connect(menuComponents->newAction, SIGNAL( triggered() ), SLOT( createNewFile() ) );
-    connect(menuComponents->openAction, SIGNAL( triggered() ), SLOT( showOpenMenu() ) );
-    connect(menuComponents->saveAction, SIGNAL( triggered() ), SLOT( saveInCurrentFile() ) );
-    connect(menuComponents->saveAsAction, SIGNAL( triggered() ), SLOT( showSaveMenu() ) );
+    textField = new TextField(this);
+    setCentralWidget(textField);
+    textField->setTextEditorView(Qt::white);
+
+    //setWindowIcon(QIcon(":/images/icon.png"));
+    //setCurrentFileName("");
+
+    connect(menuComponents->newAction, SIGNAL( triggered() ), SLOT( newFile() ) );
+    connect(menuComponents->openAction, SIGNAL( triggered() ), SLOT( open() ) );
+    connect(menuComponents->saveAction, SIGNAL( triggered() ), SLOT( save() ) );
+    connect(menuComponents->saveAsAction, SIGNAL( triggered() ), SLOT( saveAs() ) );
     for(int i = 0; i < MenuComponents::MAX_RECENT_FILES; ++i)
         connect(menuComponents->recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
-    connect(menuComponents->exitAction, SIGNAL( triggered() ), SLOT( close() ) );
+    connect(menuComponents->exitAction, SIGNAL( triggered() ), SLOT( closeApp() ) );
     connect(menuComponents->cutAction, SIGNAL( hovered() ), SLOT( cutText() ) );
     connect(menuComponents->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
     connect(menuComponents->pasteAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
@@ -37,7 +36,7 @@ KnockPad::KnockPad() : QMainWindow()
     connect(menuComponents->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
     connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
-    this->setWindowTitle("KnockPad");
+    this->setWindowTitle(tr("KnockPad"));
 
     this->resize(1366, 768);
     this->show();
@@ -45,9 +44,10 @@ KnockPad::KnockPad() : QMainWindow()
 
 KnockPad::~KnockPad()
 {
-    delete menuComponents;\
+    delete menuComponents;
     delete menu;
     delete editToolBar;
+    delete statusBar;
     delete textField;
 }
 
@@ -56,52 +56,95 @@ void KnockPad::contextMenuEvent(QContextMenuEvent* mouse_pointer)
     menu->getContextMenu()->exec(mouse_pointer->globalPos());
 }
 
-void KnockPad::createNewFile()
-{
-    if(maybeSave())
-    {
-        textEdit.clear();
-        //setCurrentFileName(QString());
-    }
-}
-
-bool KnockPad::maybeSave()
+bool KnockPad::agreedToContinue()
  {
      if (!this->textEdit.document()->isModified())
          return true;
-     if (currentFileName.startsWith(QLatin1String(":/")))
-         return true;
-     QMessageBox::StandardButton ret;
-     //ret = QMessageBox::warning(this, tr("Application"),
-       //                         tr("The document has been modified.\n"
-         //                          "Do you want to save your changes?"),
-           //                     QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
-     QMessageBox::warning(this, tr("text"), tr("text2"));
-     if (ret == QMessageBox::Save)
-         return true;//fileSave();
-     else if (ret == QMessageBox::Cancel)
+     QMessageBox::StandardButton answer = QMessageBox::warning(this,
+                       tr("The document has been modified"),
+                       tr("Do you want to save your changes?"),
+                       QMessageBox::Save | QMessageBox::Discard | QMessageBox::Cancel);
+
+     if (answer == QMessageBox::Save)
+         return save();
+     else if (answer == QMessageBox::Cancel)
          return false;
      return true;
  }
 
-void KnockPad::setCurrentFileName(const QString &fileName)
+void KnockPad::newFile()
 {
-    this->currentFileName = fileName;
-    //this->textEdit.setModified(false);
-
-    QString shownName;
-    if(this->currentFileName.isEmpty())
-        shownName = "untitled.txt";
-    else
-        shownName = QFileInfo(this->currentFileName).fileName();
-
-    //setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Rich Text")));
-    //setWindowModified();
+    if(agreedToContinue()){
+        textField->clear();
+        setCurrentFileName("");
+    }
 }
 
-void KnockPad::showOpenMenu()
+void KnockPad::open()
 {
-    qDebug() <<"showOpenMenu";
+    if(agreedToContinue()){
+        QString openFileName = QFileDialog::getOpenFileName(this,
+                                                tr("Open file"), ".",
+                                                tr("*.*"));
+        if(!openFileName.isEmpty())
+            loadFile(openFileName);
+
+    }
+}
+
+bool KnockPad::save()
+{
+    if(currentFileName.isEmpty())
+        return saveAs();
+    else
+        return saveFile(currentFileName);
+}
+
+bool KnockPad::saveAs()
+{
+    QString fileName = QFileDialog::getSaveFileName(this,
+                                                tr("Save file"), ".",
+                                                tr("*.*"));
+    if(!fileName.isEmpty())
+        return false;
+    return saveFile(fileName);
+}
+
+bool KnockPad::loadFile(const QString &fileName)
+{
+    if(!textField->readFile(fileName)){
+        statusBar->showMessage(tr("Loadind canceled"), 2000);
+        return false;
+    }
+    setCurrentFileName(fileName);
+    statusBar->showMessage(tr("File loaded"), 2000);
+    return true;
+}
+
+bool KnockPad::saveFile(const QString &fileName)
+{
+    if(!textField->writeFile(fileName)){
+        statusBar->showMessage(tr("Saving canceled"));
+        return false;
+    }
+    setCurrentFileName(fileName);
+    statusBar->showMessage(tr("File saved"), 2000);
+    return true;
+}
+
+void KnockPad::closeApp()
+{
+    close();
+}
+
+void KnockPad::closeEvent(QCloseEvent * closeEvent)
+{
+    if(agreedToContinue()){
+        //writeSettings();
+        closeEvent->accept();
+    }
+    else
+        closeEvent->ignore();
 }
 
 void KnockPad::saveInCurrentFile()
@@ -109,18 +152,14 @@ void KnockPad::saveInCurrentFile()
     QString str = QFileDialog::getSaveFileName(0, tr("Save File"));
     if(!currentFileName.isEmpty())
     {
-        QFile file(currentFileName);
     }
-}
-
-void KnockPad::showSaveMenu()
-{
-    QString str = QFileDialog::getSaveFileName(0, "Save File");
 }
 
 void KnockPad::openRecentFile()
 {
-    qDebug() << "openRecentFile";
+//    if(agreedToContinue())
+//        loadFile(recentFileNames[menuComponents->MAX_RECENT_FILES - 1]);
+
 }
 
 void KnockPad::cutText()
@@ -161,4 +200,19 @@ void KnockPad::setBoldText()
 void KnockPad::setItalicText()
 {
     qDebug() << "setItalicText";
+}
+
+void KnockPad::setCurrentFileName(const QString &fileName)
+{
+    this->currentFileName = fileName;
+    //this->textEdit.setModified(false);
+
+    QString shownName;
+    if(this->currentFileName.isEmpty())
+        shownName = tr("untitled.txt");
+    else
+        shownName = QFileInfo(this->currentFileName).fileName();
+
+    //setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Rich Text")));
+    //setWindowModified();
 }

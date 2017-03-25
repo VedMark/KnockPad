@@ -12,15 +12,12 @@ class EditToolBar : public QToolBar
 
 public:
     explicit EditToolBar(MenuComponents * components, QWidget *parent = Q_NULLPTR);
-    ~EditToolBar();
 
 protected:
     void createToolBar();
 
 private:
-    //QToolBar *toolBar;
     MenuComponents *components;
-
 };
 
 

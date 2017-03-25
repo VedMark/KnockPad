@@ -21,6 +21,7 @@ protected:
 
 private:
     MenuComponents *components;
+
     QMenu *fileMenu;
     QMenu *editMenu;
     QMenu *contextMenu;
