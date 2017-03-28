@@ -44,16 +44,26 @@ KnockPad::KnockPad() : QMainWindow()
 
 KnockPad::~KnockPad()
 {
-    delete menuComponents;
-    delete menu;
-    delete editToolBar;
-    delete statusBar;
-    delete textField;
 }
 
 void KnockPad::contextMenuEvent(QContextMenuEvent* mouse_pointer)
 {
     menu->getContextMenu()->exec(mouse_pointer->globalPos());
+}
+
+void KnockPad::closeEvent(QCloseEvent * closeEvent)
+{
+    if(agreedToContinue()){
+        //writeSettings();
+        closeEvent->accept();
+    }
+    else
+        closeEvent->ignore();
+}
+
+void KnockPad::resizeEvent(QResizeEvent *)
+{
+
 }
 
 bool KnockPad::agreedToContinue()
@@ -135,16 +145,6 @@ bool KnockPad::saveFile(const QString &fileName)
 void KnockPad::closeApp()
 {
     close();
-}
-
-void KnockPad::closeEvent(QCloseEvent * closeEvent)
-{
-    if(agreedToContinue()){
-        //writeSettings();
-        closeEvent->accept();
-    }
-    else
-        closeEvent->ignore();
 }
 
 void KnockPad::saveInCurrentFile()

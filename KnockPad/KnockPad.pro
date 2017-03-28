@@ -30,7 +30,9 @@ SOURCES += main.cpp\
     Menu.cpp \
     EditToolBar.cpp \
     StatusBar.cpp \
-    Carriage.cpp
+    Recorder.cpp \
+    Line.cpp \
+    Phrase.cpp
 
 RESOURCES += icons.qrc
 
@@ -41,4 +43,6 @@ HEADERS  += \
     Menu.h \
     EditToolBar.h \
     StatusBar.h \
-    Carriage.h
+    Recorder.h \
+    Line.h \
+    Phrase.h

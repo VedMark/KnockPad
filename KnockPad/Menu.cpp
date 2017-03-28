@@ -13,9 +13,6 @@ Menu::Menu(MenuComponents *components, QWidget *parent)
 
 Menu::~Menu()
 {
-    delete fileMenu;
-    delete editMenu;
-    delete contextMenu;
 }
 
 void Menu::createMenu()

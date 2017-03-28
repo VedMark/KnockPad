@@ -12,27 +12,6 @@ MenuComponents::MenuComponents(QWidget *parent)
 
 MenuComponents::~MenuComponents()
 {
-    delete newAction;
-    delete openAction;
-    delete saveAction;
-    delete saveAsAction;
-    for(int i = 0; i < MAX_RECENT_FILES; ++i)
-        delete this->recentFileActions[i];
-    delete exitAction;
-
-    delete cutAction;
-    delete copyAction;
-    delete pasteAction;
-    delete deleteAction;
-
-    delete fontTypeMenu;
-    delete fontSizeMenu;
-
-    delete fontTypeAction;
-    delete fontSizeAction;
-    delete fontBoldAction;
-    delete fontItalicAction;
-
 }
 
 void MenuComponents::createFileActions()

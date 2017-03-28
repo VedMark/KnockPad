@@ -23,7 +23,6 @@ StatusBar::StatusBar(int line, int column, QWidget *parent)
 
 StatusBar::~StatusBar()
 {
-    delete carriagePos;
 }
 
 void StatusBar::updateStatusBar(int line, int column)

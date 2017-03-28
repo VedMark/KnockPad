@@ -54,8 +54,10 @@ public slots:
 signals:
 
 protected:
-    virtual void contextMenuEvent(QContextMenuEvent* pe);
+    void contextMenuEvent(QContextMenuEvent* pe);
     void closeEvent(QCloseEvent * closeEvent);
+    void resizeEvent(QResizeEvent *);
+
     void createStatusBar();
 
 private:

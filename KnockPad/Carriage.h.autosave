@@ -1,7 +1,9 @@
 #ifndef CARRIAGE_H
 #define CARRIAGE_H
 
-#include <QObject>
+#include <QtCore>
+
+struct 
 
 
 class Carriage: public QObject
@@ -9,7 +11,7 @@ class Carriage: public QObject
     Q_OBJECT
 
 public:
-    Carriage(int x, int y, QObject parent = Q_NULLPTR);
+    Carriage(QObject *parent = Q_NULLPTR);
 
 private:
     qint64 x;
