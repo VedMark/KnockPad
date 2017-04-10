@@ -31,8 +31,8 @@ SOURCES += main.cpp\
     EditToolBar.cpp \
     StatusBar.cpp \
     Recorder.cpp \
-    Line.cpp \
-    Phrase.cpp
+    Cursor.cpp \
+    Text.cpp
 
 RESOURCES += icons.qrc
 
@@ -44,5 +44,5 @@ HEADERS  += \
     EditToolBar.h \
     StatusBar.h \
     Recorder.h \
-    Line.h \
-    Phrase.h
+    Cursor.h \
+    Text.h
