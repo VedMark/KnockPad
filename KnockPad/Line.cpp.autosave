@@ -1,0 +1,213 @@
+#include "Line.h"
+
+Line::Line(QObject *parent)
+    : QObject(parent)
+{
+    width_ = 0;
+    height_ = 0;
+}
+
+Line::Line(Symbol symbol, QObject *parent)
+    : QObject(parent)
+{
+    content_.push_back(symbol);
+
+    width_ = symbol.length();
+    height_ = symbol.height();
+}
+
+Line::~Line()
+{
+}
+
+Symbol Line::pop_front()
+{
+    Symbol symb = content_.first();
+    content_.pop_front();
+    width_ -= symb.length();
+    reduce_height(symb.height());
+    emit widthChanged();
+    return symb;
+}
+
+Symbol Line::pop_back()
+{
+    Symbol symb = content_.last();
+    content_.pop_back();
+    width_ -= symb.length();
+    reduce_height(symb.height());
+    emit widthChanged();
+    return symb;
+}
+
+void Line::push_front(Symbol& symb)
+{
+    content_.push_front(symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+void Line::push_back(Symbol& symb)
+{
+    content_.push_back(symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+void Line::insert(int pos, Symbol& symb)
+{
+    content_.insert(content_.begin() + pos, symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+Symbol& Line::erase(int pos)
+{
+    Symbol symb = content_[pos];
+    width_ -= symb.length();
+    reduce_height(symb.height());
+    emit widthChanged();
+    return *content_.erase(content_.begin() + pos);
+}
+
+int Line::getSymbolBegin(int x)
+{
+    int shift = 0;
+    int i = 0;
+    while(shift <= width_)
+    {
+        if(shift + content_.at(i).length() <= x)
+            shift += content_.at(i++).length();
+        else
+            break;
+    }
+    return shift - content_.at(i - 1).length();
+}
+
+Line* Line::setNewLine(qint64 pos, QObject *parent)
+{
+    Line *newLine = new Line(parent);
+    for(int i = pos; i < content_.size(); ++i)
+    {
+        newLine->push_back(erase(pos));
+    }
+    return newLine;
+}
+
+void Line::draw(QPoint pos, QPainter &device)
+{
+    foreach(Symbol symbol, content_)
+    {
+        device.drawText(pos, symbol.value());
+    }
+}
+
+// Private functions
+void Line::raise_height(int h)
+{
+    if(h > height_)
+    {
+        height_ = h;
+        emit heightChanged();
+    }
+}
+
+void Line::reduce_height(int h)
+{
+    if(h == height_)
+    {
+        int heighest = 0;
+        foreach(Symbol symb, content_)
+        {
+            if(symb.height() > heighest)
+                heighest = symb.height();
+        }
+        if(heighest < height_)
+        {
+            height_ = heighest;
+            emit heightChanged();
+        }
+    }
+}
+
+
+Line::Line(QObject *parent)
+    : QObject(parent)
+{
+    height_ = 0;
+}
+
+Line::~Line()
+{
+}
+
+Line Text::pop_front()
+{
+    Line line = content_.first();
+    strings.pop_front();
+    width_ -= line.getlength();
+    reduce_height(line.getHeight());
+    emit heightChanged();
+    return line;
+}
+
+Line Line::pop_back()
+{
+    Symbol symb = content_.last();
+    content_.pop_back();
+    width_ -= symb.length();
+    reduce_height(symb.height());
+    emit widthChanged();
+    return symb;
+}
+
+void Line::push_front(Symbol& symb)
+{
+    content_.push_front(symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+void Line::push_back(Symbol& symb)
+{
+    content_.push_back(symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+void Line::insert(int pos, Symbol& symb)
+{
+    content_.insert(content_.begin() + pos, symb);
+    width_ += symb.length();
+    raise_height(symb.height());
+    emit widthChanged();
+}
+
+Symbol& Line::erase(int pos)
+{
+    Symbol symb = content_[pos];
+    width_ -= symb.length();
+    reduce_height(symb.height());
+    emit widthChanged();
+    return *content_.erase(content_.begin() + pos);
+}
+
+QPoint Text::getShiftByCoord(QPoint point)
+{
+    int shiftY = 0;
+    int i = 0;
+    while(shiftY <= point)
+    {
+        if(shiftY + strings.at(i).getHeight() > point.y())
+            break;
+        else
+            shiftY += strings.at(i++).getHeight();
+    }
+
+    return QPoint(shiftY, strings.at(i).getSymbolBegin(point.x()));
+}

@@ -4,15 +4,14 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPalette>
-#include <QScrollArea>
-#include <QScrollBar>
 #include <QString>
 #include <QTimer>
 #include <QWidget>
 
 #include "Recorder.h"
-#include "Line.h"
-#include "Phrase.h"
+#include "Text.h"
+#include "Cursor.h"
+
 
 class TextField : public QAbstractScrollArea
 {
@@ -26,24 +25,16 @@ public:
     void setFont(const QFont &font);
     void clear();
 
+    QPoint getShiftByCoord(QPoint point);
     bool readFile(const QString &fileName);
     bool writeFile(const QString &fileName);
-
 
     // Properties
 
     void setHexCaps(const bool isCaps);
     bool hexCaps() const;
 
-    //Cursor functions
-    void setCursorPosition(QPoint position);
-    QPoint cursorPosition() const;
-
-public slots:
-
-
 signals:
-    void currentAddressChanged(qint64 address);
     void currentSizeChanged(qint64 size);
 
 
@@ -60,22 +51,23 @@ private:
     int getSelectionBegin() const;
     int getSelectionEnd() const;
 
-private slots:
-    //Cursor functions
-    void updateCursor();
-
-
 private:
-    QWidget *field;    
+    QWidget *field_;
+    QPoint edge_;
 
-    int _pxCharHeight;
-    int _pxCharWidth;
-    int _pxCursorWidth;
+    Cursor *cursor_;
+
+    Text textLines_;
+    int curLineInd_;
+    int curSymbInd_;
+
+    int pxCharHeight_;
+    int pxCharWidth_;
     int _pxHorEdge;
     int _pxVertEdge;
-
     int _pxPosHexX;
     int _pxSelectionSub;
+
 
 
     qint64 _bSelectionBegin;
@@ -96,15 +88,12 @@ private:
     bool _overwriteMode;
     QPen _penHighlighted;
     QPen _penSelection;
-    Recorder *_records;
+    Recorder *records_;
 
     //Cursor vars
     int _addressWidth;
     int _addrDigits;
-    bool _blink;
-    qint64 _cursorPosition;
-    QTimer _cursorTimer;
-    QRect _cursorRect;
+
     QByteArray _dataShown;
     QByteArray _hexDataShown;
     qint64 _lastEventSize;
