@@ -2,6 +2,15 @@
 
 //              Symbol class implementation
 
+Symbol::Symbol()
+{
+    font_ = QFont(QString("Monospace"), 14);
+    font_.setBold(false);
+    font_.setItalic(false);
+    fontMetrics_ = new QFontMetrics(font_);
+    value_ = QChar(0x00);
+}
+
 Symbol::Symbol(QChar value)
 {
     font_ = QFont(QString("Monospace"), 14);
@@ -44,6 +53,7 @@ Line::Line(QObject *parent)
 {
     width_ = 0;
     height_ = 0;
+    content_.push_back(Symbol());
 }
 
 Line::Line(Symbol symbol, QObject *parent)
@@ -139,7 +149,7 @@ int Line::getSymbolBegin(int x, int edgeX, int ind) const
     int shift = edgeX;
     int i = 0;
     if(x >= width_)
-        shift = width_;
+        shift = width_ + edgeX;
     else if(x < edgeX)
         shift = edgeX;
     else
@@ -215,7 +225,15 @@ void Line::reduce_height(int h)
 Text::Text(QObject *parent)
     : QObject(parent)
 {
-    height_ = 0;
+    content_.push_back(Line(parent));
+    height_ = 23;
+}
+
+Text::Text(int height, QObject *parent)
+    : QObject(parent)
+{
+    content_.push_back(Line(parent));
+    height_ = height;
 }
 
 Text::Text(const Text& text) :
@@ -290,9 +308,9 @@ QPoint Text::getShiftByCoord(QPoint point, QPoint edge, int indX, int indY) cons
     int shiftX = edge.x();
     int i = 0;
     int cont_height = content_.at(content_.length() - 1).getHeight();
-    if(point.y() > edge.y() + height_ - cont_height)
+    if(point.y() >  edge.y() + height_)
     {
-        shiftX =content_.at(i).getWidth();
+        shiftX = content_.at(i).getWidth();
         shiftY = edge.y() + height_ - cont_height;
     }
     else
@@ -322,7 +340,7 @@ QPoint Text::getShiftByCoord(QPoint point, QPoint edge, int indX, int indY) cons
     return QPoint(shiftX, shiftY);
 }
 
-Symbol Text::getSymbByCoord(QPoint point, QPoint edge) const
+Symbol Text::getSymbByCoord(QPoint point, QPoint edge, int *ind) const
 {
     int shiftX = edge.x();
     int shiftY = edge.y();
@@ -337,7 +355,8 @@ Symbol Text::getSymbByCoord(QPoint point, QPoint edge) const
     while(shiftX < point.x())
         shiftX += line[j++].width();
 
-    if(j == line.size()) j--;
+    if(j == line.size() && line.size()) j--;
+    if(ind) *ind = j;
     return line[j];
 }
 

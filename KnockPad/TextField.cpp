@@ -19,15 +19,16 @@ TextField::TextField(QWidget *parent)
     cursor_->setColorCursor(viewport()->palette().color(QPalette::WindowText));
     cursor_->setColorBase(viewport()->palette().color(QPalette::Base));
 
-    textLines_ = Text(this);
+    textLines_ = Text(23);
     curLineInd_ = 0;
-    Line l = Line(Symbol(QChar('h')), this->parent());
-    l.push_back(Symbol(QChar('e')));
-    l.push_back(Symbol(QChar('l')));
-    l.push_back(Symbol(QChar('l')));
-    l.push_back(Symbol(QChar('o')));
-    textLines_.push_front(l);
-
+    curSymbInd_ = 0;
+    wasCTRLpressed = false;
+//    Line l = Line(Symbol(QChar('h')), this->parent());
+//    l.push_back(Symbol(QChar('e')));
+//    l.push_back(Symbol(QChar('l')));
+//    l.push_back(Symbol(QChar('l')));
+//    l.push_back(Symbol(QChar('o')));
+//    textLines_.push_front(l);
 
     records_ = new Recorder(this);
     viewport()->update();
@@ -77,6 +78,7 @@ bool TextField::writeFile(const QString &fileName)
 
 // Events
 
+
 void TextField::keyPressEvent(QKeyEvent *event)
 {
     int x = cursor_->x();
@@ -85,23 +87,36 @@ void TextField::keyPressEvent(QKeyEvent *event)
 
     switch(event->key())
     {
-        case Qt::Key_Up:{
-            p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 0, -1);
-            break;
-        }
-        case Qt::Key_Down:{
-            p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 0, 1);
-            break;
-        }
-
-        case Qt::Key_Right:{
-            p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 1, 0);
-            break;
-        }
-        case Qt::Key_Left:{
-            p = textLines_.getShiftByCoord(QPoint(x,y), edge_, -1, 0);
-            break;
-        }
+    case Qt::Key_Up:{
+        p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 0, -1);
+        textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
+        break;
+    }
+    case Qt::Key_Down:{
+        p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 0, 1);
+        textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
+        break;
+    }
+    case Qt::Key_Right:{
+        p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 1, 0);
+        textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
+        break;
+    }
+    case Qt::Key_Left:{
+        p = textLines_.getShiftByCoord(QPoint(x,y), edge_, -1, 0);
+        textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
+        break;
+    }
+    case Qt::Key_Control:{
+        wasCTRLpressed = true;
+        break;
+    }
+    default:
+        wasCTRLpressed = false;
+        if(event->key() >= 0x40 && event->key() <=0x5a)
+            textLines_[curLineInd_].insert(curSymbInd_++, QChar(event->key() + 32));
+        p = textLines_.getShiftByCoord(QPoint(x,y), edge_, 1, 0);
+        break;
     }
 
     Symbol symb = textLines_.getSymbByCoord(p, edge_);
@@ -111,14 +126,14 @@ void TextField::keyPressEvent(QKeyEvent *event)
 void TextField::mouseMoveEvent(QMouseEvent * event)
 {
     QPoint p = textLines_.getShiftByCoord(QPoint(event->x(),event->y()), edge_);
-    Symbol symb = textLines_.getSymbByCoord(p, edge_);
+    Symbol symb = textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
     cursor_->setCursorPosition(p, symb.width(), symb.height());
 }
 
 void TextField::mousePressEvent(QMouseEvent * event)
 {
     QPoint p = textLines_.getShiftByCoord(QPoint(event->x(),event->y()), edge_);
-    Symbol symb = textLines_.getSymbByCoord(p, edge_);
+    Symbol symb = textLines_.getSymbByCoord(p, edge_, &curSymbInd_);
     cursor_->setCursorPosition(p, symb.width(), symb.height());
 }
 

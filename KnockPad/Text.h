@@ -21,7 +21,8 @@ typedef QList<Line> LineList;
 class Symbol
 {
 public:
-    explicit Symbol(QChar value = QChar());
+    Symbol();
+    Symbol(QChar value);
     explicit Symbol(QFont font);
     explicit Symbol(QFont font, QChar value = QChar());
     Symbol(const Symbol&);
@@ -70,12 +71,12 @@ public:
     inline int length() const { return content_.length(); }
     inline int size() const { return content_.size(); }
 
-    inline Symbol pop_front();
-    inline Symbol pop_back();
-    inline void push_front(Symbol);
-    inline void push_back(Symbol);
-    inline void insert(int pos, Symbol);
-    inline Symbol erase(int pos);
+    Symbol pop_front();
+    Symbol pop_back();
+    void push_front(Symbol);
+    void push_back(Symbol);
+    void insert(int pos, Symbol);
+    Symbol erase(int pos);
 
     int getSymbolBegin(int x, int edgeX, int ind = 0) const;
 
@@ -108,6 +109,7 @@ class Text: public QObject
 
 public:
     explicit Text(QObject *parent = Q_NULLPTR);
+    explicit Text(int height, QObject *parent = Q_NULLPTR);
     Text(const Text&);
     Text& operator=(const Text&);
     ~Text();
@@ -123,7 +125,7 @@ public:
     Line erase(int pos);
 
     QPoint getShiftByCoord(QPoint p, QPoint edge, int indX = 0, int indY = 0) const;
-    Symbol getSymbByCoord(QPoint point, QPoint edge) const;
+    Symbol getSymbByCoord(QPoint point, QPoint edge, int *ind = NULL) const;
     void draw(QPainter *painter, QPoint edge);
     Line& operator[](int);
 

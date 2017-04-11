@@ -60,6 +60,7 @@ private:
     Text textLines_;
     int curLineInd_;
     int curSymbInd_;
+    bool wasCTRLpressed;
 
     int pxCharHeight_;
     int pxCharWidth_;
