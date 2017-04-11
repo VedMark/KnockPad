@@ -8,7 +8,6 @@ Symbol::Symbol()
     font_.setBold(false);
     font_.setItalic(false);
     fontMetrics_ = new QFontMetrics(font_);
-    value_ = QChar(0x00);
 }
 
 Symbol::Symbol(QChar value)
@@ -53,7 +52,8 @@ Line::Line(QObject *parent)
 {
     width_ = 0;
     height_ = 0;
-    content_.push_back(Symbol());
+    content_.reserve(1);
+    //content_.push_back(Symbol());
 }
 
 Line::Line(Symbol symbol, QObject *parent)
@@ -225,14 +225,16 @@ void Line::reduce_height(int h)
 Text::Text(QObject *parent)
     : QObject(parent)
 {
-    content_.push_back(Line(parent));
+    content_.reserve(1);
+    //content_.push_back(Line(parent));
     height_ = 23;
 }
 
 Text::Text(int height, QObject *parent)
     : QObject(parent)
 {
-    content_.push_back(Line(parent));
+    content_.reserve(1);
+    //content_.push_back(Line(parent));
     height_ = height;
 }
 

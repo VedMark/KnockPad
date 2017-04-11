@@ -19,7 +19,8 @@ TextField::TextField(QWidget *parent)
     cursor_->setColorCursor(viewport()->palette().color(QPalette::WindowText));
     cursor_->setColorBase(viewport()->palette().color(QPalette::Base));
 
-    textLines_ = Text(23);
+    textLines_ = Text(23, this);
+    textLines_.push_back(Line(textLines_));
     curLineInd_ = 0;
     curSymbInd_ = 0;
     wasCTRLpressed = false;
@@ -78,7 +79,6 @@ bool TextField::writeFile(const QString &fileName)
 
 // Events
 
-
 void TextField::keyPressEvent(QKeyEvent *event)
 {
     int x = cursor_->x();
@@ -110,6 +110,11 @@ void TextField::keyPressEvent(QKeyEvent *event)
     case Qt::Key_Control:{
         wasCTRLpressed = true;
         break;
+    case Qt::Key_Enter:{
+//            Line* line = textLines_[curLineInd_++].setNewLine(curSymbInd_, textLines_);
+//            textLines_.insert(curLineInd_, line);
+//            curSymbInd_ = 0;
+        }
     }
     default:
         wasCTRLpressed = false;
