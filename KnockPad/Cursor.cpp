@@ -17,14 +17,15 @@ Cursor::~Cursor()
 {
 }
 
-void Cursor::setCursorPosition(QPoint pos,  int w, int h)
+void Cursor::setCursor(QPoint pos, int h)
 {
     blink_ = false;
     holder_->update();
 
-    int x = (pos.x() / w) * w + edge_.x();
-    int y = (pos.y() / h) * h + edge_.y();
-    rect_.setRect(x, y, rect_.width(), rect_.height());
+    setWidth(h);
+    setHeigth(h);
+
+    rect_.setRect(pos.x(), pos.y(), rect_.width(), rect_.height());
 
     blink_ = true;
     holder_->update();
@@ -35,6 +36,11 @@ void Cursor::setCursorPosition(QPoint pos,  int w, int h)
 QPoint Cursor::cursorPosition() const
 {
     return QPoint(rect_.x(), rect_.y());
+}
+
+void Cursor::setWidth(int CharHeight)
+{
+    rect_.setWidth(static_cast<int>(log(CharHeight ) / log(16)) + 1);
 }
 
 void Cursor::draw(QPainter *painter)

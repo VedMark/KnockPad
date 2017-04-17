@@ -197,11 +197,9 @@ void TextField::copy()
 
 void TextField::cut()
 {
-
     textLines_->cutPart(textBuffer_,
                 minPos(curPos_, selectionPos_),
                 maxPos(curPos_, selectionPos_));
-    _change_positions(minPoint(selectionBegin_, selectionEnd_));
     _change_positions(minPoint(selectionBegin_, selectionEnd_));
 }
 
@@ -209,7 +207,6 @@ void TextField::paste()
 {
     int x = 0;
     int y = 0;
-
     if(isSelected())
         _erase_highlighted_text();
     textLines_->insertPart(textBuffer_, curPos_);
@@ -217,7 +214,8 @@ void TextField::paste()
         x = (*textBuffer_)[textBuffer_->length() - 1].getWidth()
                 + edge_.x();
         y = textLines_->getHeight(curPos_.x())
-                + textBuffer_->getHeight(textBuffer_->length() - 1) + edge_.y();
+                + textBuffer_->getHeight(textBuffer_->length() - 1)
+                + edge_.y();
     }
     else{
         x = (*textLines_)[curPos_.x()].getWidth(curPos_.y())

@@ -164,22 +164,22 @@ void KnockPad::openRecentFile()
 
 void KnockPad::cutText()
 {
-    qDebug() << "cutText";
+    textField->cut();
 }
 
 void KnockPad::copyText()
 {
-    qDebug() << "copyText";
+    textField->copy();
 }
 
 void KnockPad::pasteText()
 {
-    qDebug() << "pasteText";
+    textField->paste();
 }
 
 void KnockPad::deleteText()
 {
-    qDebug() << "deleteText";
+     textField->clear();
 }
 
 void KnockPad::changeFontType()

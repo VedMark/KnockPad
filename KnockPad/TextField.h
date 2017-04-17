@@ -1,6 +1,7 @@
 #ifndef TEXTFIELD_H
 #define TEXTFIELD_H
 
+#include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPalette>
@@ -31,11 +32,21 @@ public:
 
     // Properties
 
-    void setHexCaps(const bool isCaps);
-    bool hexCaps() const;
+    inline bool capsLock() const { return capsPressed_; }
+    inline void setCapsLock(const bool caps) { capsPressed_ = caps; }
+
+    inline bool isSelected() const { return selected_; }
+    inline void setSelected(bool selected) { selected_ = selected; }
+
+    void copy();
+    void cut();
+    void paste();
+    void selectAll();
 
 signals:
     void currentSizeChanged(qint64 size);
+    void curLineIndexChanged(int);
+    void curSymbIndexChanged(int);
 
 
 protected:
@@ -45,11 +56,22 @@ protected:
     void paintEvent(QPaintEvent *);
 
 private:
-    void resetSelection();
-    void resetSelection(qint64 pos);
-    void setSelection(qint64 pos);
-    int getSelectionBegin() const;
-    int getSelectionEnd() const;
+    inline QPoint _get_end_document();
+    inline void _change_positions(QPoint p);
+
+    inline QPoint _handle_backspace();
+    inline QPoint _handle_enter();
+
+    void _fill_highlightning_rect(QPainter &painter, const QPoint&, const QPoint&);
+    inline void _set_selection_begin(QPoint);
+    inline void _set_selection_end(QPoint);
+    inline void _set_selection_pos(QPoint);
+    inline void _erase_highlighted_text();
+    inline const QPoint& minPoint(const QPoint&, const QPoint&) const;
+    inline const QPoint& maxPoint(const QPoint&, const QPoint&) const;
+    inline const QPoint& minPos(const QPoint&, const QPoint&) const;
+    inline const QPoint& maxPos(const QPoint&, const QPoint&) const;
+    inline void _reset_selection();
 
 private:
     QWidget *field_;
@@ -57,44 +79,22 @@ private:
 
     Cursor *cursor_;
 
-    Text textLines_;
-    int curLineInd_;
-    int curSymbInd_;
-    bool wasCTRLpressed;
+    Text* textLines_;
+    Text* textBuffer_;
 
-    int pxCharHeight_;
-    int pxCharWidth_;
-    int _pxHorEdge;
-    int _pxVertEdge;
-    int _pxPosHexX;
-    int _pxSelectionSub;
+    QPoint curPos_;
+    bool capsPressed_;
+
+    QColor highlightningColor_;
+    QPoint selectionBegin_;
+    QPoint selectionEnd_;
+    QPoint selectionPos_;
+    bool selected_;
 
 
 
-    qint64 _bSelectionBegin;
-    qint64 _bSelectionEnd;
-    qint64 _bSelectionInit;
-    qint64 _bPosCurrent;
-    qint64 _bPosFirst;
 
-    qint64 _addressOffset;
-    bool _addressArea;
-    QColor _addressAreaColor;
-    QBrush _brushHighlighted;
-    QBrush _brushSelection;
-    int _bytesPerLine;
-    bool _hexCaps;
-    int _hexCharsInLine;
-    bool _highlighting;
-    bool _overwriteMode;
-    QPen _penHighlighted;
-    QPen _penSelection;
     Recorder *records_;
-
-    //Cursor vars
-    int _addressWidth;
-    int _addrDigits;
-
     QByteArray _dataShown;
     QByteArray _hexDataShown;
     qint64 _lastEventSize;

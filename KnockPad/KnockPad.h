@@ -76,8 +76,6 @@ private:
 
     QString currentFileName;
     QTextEdit textEdit;
-    //QStringList
-
 };
 
 #endif

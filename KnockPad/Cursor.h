@@ -17,8 +17,7 @@ public:
     explicit Cursor(QWidget *holder, QObject *parent = Q_NULLPTR);
     ~Cursor();
 
-    void setCursorPosition(QPoint position);
-    void setCursorPosition(QPoint position, int w, int h);
+    void setCursor(QPoint position, int h);
     QPoint cursorPosition() const;
 
     inline QRect rectangle() const { return rect_; }
@@ -43,10 +42,7 @@ public:
     inline void setY(int y) { rect_.setY(y); }
 
     inline int width() const { return rect_.width(); }
-    inline void setWidth(int width)
-    {
-        rect_.setWidth(static_cast<int>(log(width) / log(4)) + 1);
-    }
+    inline void setWidth(int CharHeight);
 
     inline int heigth() const { return rect_.height(); }
     inline void setHeigth(int heigth) { rect_.setHeight(heigth); }

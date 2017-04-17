@@ -19,8 +19,8 @@
 
 QT_BEGIN_MOC_NAMESPACE
 struct qt_meta_stringdata_TextField_t {
-    QByteArrayData data[4];
-    char stringdata[36];
+    QByteArrayData data[6];
+    char stringdata[76];
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -32,9 +32,12 @@ static const qt_meta_stringdata_TextField_t qt_meta_stringdata_TextField = {
 QT_MOC_LITERAL(0, 0, 9),
 QT_MOC_LITERAL(1, 10, 18),
 QT_MOC_LITERAL(2, 29, 0),
-QT_MOC_LITERAL(3, 30, 4)
+QT_MOC_LITERAL(3, 30, 4),
+QT_MOC_LITERAL(4, 35, 19),
+QT_MOC_LITERAL(5, 55, 19)
     },
     "TextField\0currentSizeChanged\0\0size\0"
+    "curLineIndexChanged\0curSymbIndexChanged\0"
 };
 #undef QT_MOC_LITERAL
 
@@ -44,18 +47,22 @@ static const uint qt_meta_data_TextField[] = {
        7,       // revision
        0,       // classname
        0,    0, // classinfo
-       1,   14, // methods
+       3,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
-       1,       // signalCount
+       3,       // signalCount
 
  // signals: name, argc, parameters, tag, flags
-       1,    1,   19,    2, 0x06,
+       1,    1,   29,    2, 0x06,
+       4,    1,   32,    2, 0x06,
+       5,    1,   35,    2, 0x06,
 
  // signals: parameters
     QMetaType::Void, QMetaType::LongLong,    3,
+    QMetaType::Void, QMetaType::Int,    2,
+    QMetaType::Void, QMetaType::Int,    2,
 
        0        // eod
 };
@@ -66,6 +73,8 @@ void TextField::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
         TextField *_t = static_cast<TextField *>(_o);
         switch (_id) {
         case 0: _t->currentSizeChanged((*reinterpret_cast< qint64(*)>(_a[1]))); break;
+        case 1: _t->curLineIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
+        case 2: _t->curSymbIndexChanged((*reinterpret_cast< int(*)>(_a[1]))); break;
         default: ;
         }
     } else if (_c == QMetaObject::IndexOfMethod) {
@@ -75,6 +84,18 @@ void TextField::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, v
             typedef void (TextField::*_t)(qint64 );
             if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&TextField::currentSizeChanged)) {
                 *result = 0;
+            }
+        }
+        {
+            typedef void (TextField::*_t)(int );
+            if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&TextField::curLineIndexChanged)) {
+                *result = 1;
+            }
+        }
+        {
+            typedef void (TextField::*_t)(int );
+            if (*reinterpret_cast<_t *>(func) == static_cast<_t>(&TextField::curSymbIndexChanged)) {
+                *result = 2;
             }
         }
     }
@@ -105,13 +126,13 @@ int TextField::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 1)
+        if (_id < 3)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 1;
+        _id -= 3;
     } else if (_c == QMetaObject::RegisterMethodArgumentMetaType) {
-        if (_id < 1)
+        if (_id < 3)
             *reinterpret_cast<int*>(_a[0]) = -1;
-        _id -= 1;
+        _id -= 3;
     }
     return _id;
 }
@@ -121,5 +142,19 @@ void TextField::currentSizeChanged(qint64 _t1)
 {
     void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
     QMetaObject::activate(this, &staticMetaObject, 0, _a);
+}
+
+// SIGNAL 1
+void TextField::curLineIndexChanged(int _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 1, _a);
+}
+
+// SIGNAL 2
+void TextField::curSymbIndexChanged(int _t1)
+{
+    void *_a[] = { 0, const_cast<void*>(reinterpret_cast<const void*>(&_t1)) };
+    QMetaObject::activate(this, &staticMetaObject, 2, _a);
 }
 QT_END_MOC_NAMESPACE
