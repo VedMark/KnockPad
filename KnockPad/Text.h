@@ -60,9 +60,8 @@ class Line : public QObject
     Q_OBJECT
 
 public:
-    explicit Line(QObject *parent = 0);
-    explicit Line(int height, QObject *parent = 0);
-    explicit Line(Symbol symbol, QObject *parent = Q_NULLPTR);
+    explicit Line(QObject *parent = Q_NULLPTR);
+    explicit Line(int height, QObject *parent = Q_NULLPTR);
     Line(const Line&);
     Line& operator=(const Line&);
     ~Line();
@@ -78,9 +77,9 @@ public:
 
     Symbol pop_front();
     Symbol pop_back();
-    void push_front(Symbol);
-    void push_back(Symbol);
-    void insert(int pos, Symbol);
+    void push_front(const Symbol&);
+    void push_back(const Symbol&);
+    void insert(int pos, const Symbol&);
     Symbol erase(int pos);
 
     int getSymbolIndex(int pos, int edgeX) const;
@@ -88,8 +87,6 @@ public:
 
     // Divides text into two parts after pos and creates new Line;
     Line getNewLine(int pos);
-
-    void draw(QPoint pos, QPainter &device) const;
 
     Symbol& operator[](int);
 
@@ -116,33 +113,37 @@ public:
     explicit Text(QObject *parent = Q_NULLPTR);
     explicit Text(int h, QObject *parent = Q_NULLPTR);
     Text(const Text&);
-    Text& operator=(const Text&);
     ~Text();
 
+    Text& operator=(const Text&);
     Line& operator[](int);
 
     inline qint64 getHeight() const { return height_; }
     qint64 getHeight(int index) const;
+
     inline int length() const { return content_.length(); }
 
-    inline void setCurrentFont(const QFont* font) {
+    inline QFont* getCurrentFont() const { return curFieldFont_; }
+    inline void setCurrentFont(const QFont* font){
         curFieldFont_ = const_cast<QFont*>(font);
     }
 
-    Line& pop_front();
-    Line& pop_back();
-    void push_front( const Line &);
-    void push_back( const Line &);
+    int getLineIndex(int pos, int edgeY) const;
+
+    Line erase(int pos);
     void insert(int pos, const Line &);
     void insert(int posX, int posY, const Symbol &);
-    Line erase(int pos);
-    void backspace(int x, int y);
+    Line &pop_front();
+    Line &pop_back();
+    void push_front( const Line &);
+    void push_back( const Line &);
 
     Symbol getSymbol(int i, int j);
-    int getLineIndex(int pos, int edgeY) const;
+    void eraseSymbol(int x, int y);
     void deleteText(const QPoint& begin,const QPoint& end);
+
     QPoint getShiftByCoord(QPoint p, QPoint edge, int indX = 0, int indY = 0) const;
-    Symbol* getSymbByCoord(QPoint point, QPoint edge);
+    Symbol *getSymbByCoord(QPoint point, QPoint edge);
     void draw(QPainter *painter, QPoint edge);
 
     void copyPart(Text* res, QPoint beginPos, QPoint endPos);

@@ -1,6 +1,6 @@
 ﻿#include "TextField.h"
 
-TextField::TextField(QWidget *parent)
+TextField::TextField(QString fontName, int fontSize, QWidget *parent)
     : QAbstractScrollArea(parent)
 {
     field_ = new QWidget(this);
@@ -10,7 +10,7 @@ TextField::TextField(QWidget *parent)
 
     edge_ = QPoint(5, 5);
 
-    setFont(QFont(QString("Monospace"), 14));
+    setFont(QFont(fontName, fontSize));
 
     cursor_ = new Cursor(viewport(), this);
     cursor_->setEdge(edge_);
@@ -23,18 +23,16 @@ TextField::TextField(QWidget *parent)
 
     textBuffer_= new Text(QFontMetrics(font()).height(), this);
 
-    //connect(this, SIGNAL( fontChanged(QFont*) ), textLines_, SLOT( setCurrentFont(QFont*) ) );
     highlightningColor_ = QColor(0xff, 0x66, 0x00);
     this->palette().highlight().color();
     selectionBegin_ = edge_;
     selectionEnd_ = edge_;
     selectionPos_ = QPoint(0, 0);
     setSelected(false);
-    curPos_ = QPoint(0, 0);
+    setCurrentPos(QPoint(0, 0));
 
     setCapsLock(false);
 
-    records_ = new Recorder(this);
     viewport()->update();
 }
 
@@ -44,6 +42,26 @@ TextField::~TextField()
     delete cursor_;
     delete textBuffer_;
     delete textLines_;
+}
+
+void TextField::changeCurrentFontSize(const QString&)
+{
+
+}
+
+void TextField::changeCurrentFont(const QString&)
+{
+
+}
+
+void TextField::changeToItalics()
+{
+
+}
+
+void TextField::changeToBold()
+{
+
 }
 
 //View public actions
@@ -116,7 +134,7 @@ void TextField::keyPressEvent(QKeyEvent *event)
         else if(QApplication::keyboardModifiers() == Qt::ShiftModifier)
                 if(capsLock())
                     in_char = in_char.toLower();
-        textLines_->insert(curPos_.x(), curPos_.y(), in_char);
+        textLines_->insert(curPos_.x(), curPos_.y(), Symbol(in_char));
         p = textLines_->getShiftByCoord(selectionBegin_, edge_, 1, 0);
     }
 
@@ -154,8 +172,8 @@ void TextField::mouseMoveEvent(QMouseEvent * event)
     Symbol* symb = textLines_->getSymbByCoord(p, edge_);
     if(symb != NULL)
         cursor_->setCursor(p, symb->height());
-    curPos_.setX(textLines_->getLineIndex(p.y(), edge_.y()));
-    curPos_.setY((*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x()));
+    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
+                 (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
     _set_selection_end(p);
     setSelected(true);
 }
@@ -168,8 +186,8 @@ void TextField::mousePressEvent(QMouseEvent * event)
         cursor_->setCursor(p, symb->height());
     else
         cursor_->setCursor(p, (*textLines_)[textLines_->getLineIndex(p.x(), p.y())].getHeight());
-    curPos_.setX(textLines_->getLineIndex(p.y(), edge_.y()));
-    curPos_.setY((*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x()));
+    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
+                  (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
     _set_selection_pos(curPos_);
     _set_selection_begin(p);
     _set_selection_end(p);
@@ -197,10 +215,10 @@ void TextField::copy()
 
 void TextField::cut()
 {
-
     textLines_->cutPart(textBuffer_,
                 minPos(curPos_, selectionPos_),
                 maxPos(curPos_, selectionPos_));
+    setCurrentPos(minPos(curPos_, selectionPos_));
     _change_positions(minPoint(selectionBegin_, selectionEnd_));
     _change_positions(minPoint(selectionBegin_, selectionEnd_));
 }
@@ -234,8 +252,8 @@ void TextField::selectAll()
     selectionBegin_ = edge_;
     selectionEnd_ = _get_end_document();
     selectionPos_ = QPoint(0, 0);
-    curPos_ = QPoint(textLines_->length() - 1,
-                     (*textLines_)[textLines_->length() - 1].length());
+    setCurrentPos(QPoint(textLines_->length() - 1,
+                     (*textLines_)[textLines_->length() - 1].length()));
 }
 
 QPoint TextField::_get_end_document()
@@ -247,13 +265,13 @@ QPoint TextField::_get_end_document()
 
 void TextField::_change_positions(QPoint p)
 {
-    curPos_.setX(textLines_->getLineIndex(p.y(), edge_.y()));
-    curPos_.setY( (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x()));
+    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
+                  (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
     _set_selection_pos(curPos_);
     _set_selection_begin(p);
     _set_selection_end(p);
 
-    Symbol symb = textLines_->getSymbol(curPos_.x(), curPos_.y());
+    const Symbol& symb = textLines_->getSymbol(curPos_.x(), curPos_.y());
     if(symb.value() == QChar()){
         QFontMetrics metrics(font());
         cursor_->setCursor(p, metrics.height());
@@ -271,7 +289,7 @@ QPoint TextField::_handle_backspace()
     }
     else{
         p = textLines_->getShiftByCoord(minPoint(selectionBegin_, selectionEnd_), edge_, -1, 0);
-        textLines_->backspace(curPos_.x(), curPos_.y());
+        textLines_->eraseSymbol(curPos_.x(), curPos_.y());
     }
     return p;
 }
@@ -294,8 +312,6 @@ void TextField::_fill_highlightning_rect(QPainter &painter, const QPoint &begin,
                 selectionPos_.x() :
                 curPos_.x();
 
-    QBrush brush = QBrush(highlightningColor_);
-
     if(beginPos < endPos){
         int xBegin = begin.x();
         int yBegin = begin.y();
@@ -315,14 +331,14 @@ void TextField::_fill_highlightning_rect(QPainter &painter, const QPoint &begin,
 
                 painter.fillRect(QRect(QPoint(xBegin, yBegin),
                                        QPoint(10, yEnd)),
-                                 brush);
+                                 highlightningColor_);
                 continue;
             }
             xEnd = (*textLines_)[xPos].getWidth() + edge_.x();
 
             painter.fillRect(QRect(QPoint(xBegin, yBegin),
                                    QPoint(xEnd + 5, yEnd)),
-                             brush);
+                             highlightningColor_);
         }
 
         yBegin = yEnd;
@@ -330,12 +346,12 @@ void TextField::_fill_highlightning_rect(QPainter &painter, const QPoint &begin,
         yEnd += (*textLines_)[xPos].getMaxHeight();
         painter.fillRect(QRect(QPoint(xBegin, yBegin),
                            QPoint(xEnd, yEnd)),
-                           brush);
+                           highlightningColor_);
     }
     else{
         painter.fillRect(QRect(QPoint(begin.x(), begin.y()),
                                 QPoint(end.x(), end.y() + (*textLines_)[beginPos].getMaxHeight())),
-                         brush);
+                         highlightningColor_);
     }
 }
 

@@ -19,7 +19,7 @@ class TextField : public QAbstractScrollArea
     Q_OBJECT
 
 public:
-    explicit TextField(QWidget *parent = Q_NULLPTR);
+    explicit TextField(QString fontName, int fontSize, QWidget *parent = Q_NULLPTR);
     ~TextField();
 
     void setTextEditorView(Qt::GlobalColor color);
@@ -30,24 +30,34 @@ public:
     bool readFile(const QString &fileName);
     bool writeFile(const QString &fileName);
 
-    // Properties
-
     inline bool capsLock() const { return capsPressed_; }
     inline void setCapsLock(const bool caps) { capsPressed_ = caps; }
 
     inline bool isSelected() const { return selected_; }
     inline void setSelected(bool selected) { selected_ = selected; }
 
+    inline QPoint getCurrentPos() const { return curPos_; }
+    inline void setCurrentPos(const QPoint& curPos) {
+        curPos_ = curPos;
+        emit posChanged(curPos_);
+    }
+
     void copy();
     void cut();
     void paste();
     void selectAll();
 
-signals:
-    void currentSizeChanged(qint64 size);
-    void curLineIndexChanged(int);
-    void curSymbIndexChanged(int);
+public slots:
+    void changeCurrentFontSize(const QString&);
+    void changeCurrentFont(const QString&);
+    void changeToItalics();
+    void changeToBold();
 
+signals:
+    void posChanged(QPoint);
+//    void currentSizeChanged(qint64 size);
+//    void curLineIndexChanged(int);
+//    void curSymbIndexChanged(int);
 
 protected:
     void keyPressEvent(QKeyEvent *);
@@ -77,7 +87,7 @@ private:
     QWidget *field_;
     QPoint edge_;
 
-    Cursor *cursor_;
+    Cursor* cursor_;
 
     Text* textLines_;
     Text* textBuffer_;
@@ -91,16 +101,8 @@ private:
     QPoint selectionPos_;
     bool selected_;
 
-
-
-
-    Recorder *records_;
-    QByteArray _dataShown;
-    QByteArray _hexDataShown;
-    qint64 _lastEventSize;
-    QByteArray _markedShown;
-    int _rowsShown;
-    bool _dynamicBytesPerLine;
+    QFont currentFont;
+    int currentFontSize;
 };
 
 #endif

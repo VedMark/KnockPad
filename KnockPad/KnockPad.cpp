@@ -13,7 +13,8 @@ KnockPad::KnockPad() : QMainWindow()
     statusBar = new StatusBar(this);
     setStatusBar(statusBar);
 
-    textField = new TextField(this);
+    textField = new TextField(QString("Monospace"), 14, this);
+    textField->setFocus();
     setCentralWidget(textField);
     textField->setTextEditorView(Qt::white);
 
@@ -27,7 +28,7 @@ KnockPad::KnockPad() : QMainWindow()
     for(int i = 0; i < MenuComponents::MAX_RECENT_FILES; ++i)
         connect(menuComponents->recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
     connect(menuComponents->exitAction, SIGNAL( triggered() ), SLOT( closeApp() ) );
-    connect(menuComponents->cutAction, SIGNAL( hovered() ), SLOT( cutText() ) );
+    connect(menuComponents->cutAction, SIGNAL( triggered() ), SLOT( cutText() ) );
     connect(menuComponents->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
     connect(menuComponents->pasteAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
     connect(menuComponents->deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
@@ -35,6 +36,9 @@ KnockPad::KnockPad() : QMainWindow()
     connect(menuComponents->fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
     connect(menuComponents->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
     connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
+
+    connect(textField, SIGNAL( posChanged(QPoint) ), statusBar, SLOT(updateStatusBar(QPoint)) );
+    connect(editToolBar->getSizeBox(), SIGNAL( editTextChanged(QString) ), textField, SLOT( changeCurrentFontSize(QString) ) );
 
     this->setWindowTitle(tr("KnockPad"));
 

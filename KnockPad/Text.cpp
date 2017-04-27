@@ -19,13 +19,6 @@ Symbol::Symbol(QChar value)
     value_ = QChar(value);
 }
 
-Symbol::Symbol(QFont font)
-{
-    font_ = font;
-    fontMetrics_ = new QFontMetrics(font_);
-    value_ = QChar(0x00);
-}
-
 Symbol::Symbol(QFont font, QChar value)
 {
     font_ = QFont(font);
@@ -66,15 +59,6 @@ Line::Line(int height, QObject *parent)
 {
     width_ = 0;
     height_ = height;
-}
-
-Line::Line(Symbol symbol, QObject *parent)
-    : QObject(parent)
-{
-    content_.push_back(symbol);
-
-    width_ = symbol.width();
-    height_ = symbol.height();
 }
 
 Line::Line(const Line& line) :
@@ -143,7 +127,7 @@ Symbol Line::pop_back()
     return symb;
 }
 
-void Line::push_front(Symbol symb)
+void Line::push_front(const Symbol& symb)
 {
     content_.push_front(symb);
     width_ += symb.width();
@@ -151,7 +135,7 @@ void Line::push_front(Symbol symb)
 
 }
 
-void Line::push_back(Symbol symb)
+void Line::push_back(const Symbol& symb)
 {
     content_.push_back(symb);
     width_ += symb.width();
@@ -159,12 +143,11 @@ void Line::push_back(Symbol symb)
 
 }
 
-void Line::insert(int pos, Symbol symb)
+void Line::insert(int pos, const Symbol& symb)
 {
     content_.insert(content_.begin() + pos, symb);
     width_ += symb.width();
     raise_height(symb.height());
-
 }
 
 Symbol Line::erase(int pos)
@@ -215,6 +198,7 @@ int Line::getSymbolBegin(int x, int edgeX, int ind) const
             shift += content_.at(i).width();
     }
     return shift;
+
 }
 
 Line Line::getNewLine(int pos)
@@ -231,15 +215,6 @@ Line Line::getNewLine(int pos)
     return newLine;
 }
 
-void Line::draw(QPoint pos, QPainter &device) const
-{
-    foreach(Symbol symbol, content_)
-    {
-        device.drawText(pos, symbol.value());
-    }
-}
-
-// Private functions
 void Line::raise_height(int h)
 {
     if(h > height_)
@@ -264,7 +239,9 @@ void Line::reduce_height(int h)
     }
 }
 
+
 //              Text class implementation
+
 
 Text::Text(QObject *parent)
     : QObject(parent)
@@ -291,6 +268,10 @@ Text::Text(const Text& text) :
     curFieldFont_ = text.curFieldFont_;
 }
 
+Text::~Text()
+{
+}
+
 Text& Text::operator=(const Text& text)
 {
     setParent(text.parent());
@@ -300,13 +281,31 @@ Text& Text::operator=(const Text& text)
     return *this;
 }
 
-Text::~Text()
-{
-}
-
 Line& Text::operator[](int pos)
 {
     return content_[pos];
+}
+
+Line Text::erase(int pos)
+{
+    reduce_height(content_[pos].getHeight());
+    Line line = content_[pos];
+    content_.erase(content_.begin() + pos);
+    return line;
+}
+
+void Text::insert(int pos, const Line& line)
+{
+    content_.insert(content_.begin() + pos, line);
+    raise_height(line.getMaxHeight());
+}
+
+void Text::insert(int posX, int posY, const Symbol &symb)
+{
+    content_[posX].insert(posY, symb);
+    int h = symb.height() - content_[posX].getHeight();
+    if(h > 0)
+        raise_height(h);
 }
 
 Line& Text::pop_front()
@@ -337,29 +336,19 @@ void Text::push_back(const Line &line)
     raise_height(line.getHeight());
 }
 
-void Text::insert(int pos, const Line& line)
+Symbol Text::getSymbol(int i, int j)
 {
-    content_.insert(content_.begin() + pos, line);
-    raise_height(line.getMaxHeight());
+    if(i < 0) i = 0;
+    else if(i >= content_.length()) i = content_.length() - 1;
+    if(content_[i].isEmpty())
+        return Symbol();
+    if(j < 0) j = 0;
+    else if(j >= content_[i].length()) j = content_[i].length() - 1;
+
+    return content_[i][j];
 }
 
-void Text::insert(int posX, int posY, const Symbol &symb)
-{
-    content_[posX].insert(posY, symb);
-    int h = symb.height() - content_[posX].getHeight();
-    if(h > 0)
-        raise_height(h);
-}
-
-Line Text::erase(int pos)
-{
-    reduce_height(content_[pos].getHeight());
-    Line line = content_.at(pos);
-    content_.erase(content_.begin() + pos);
-    return line;
-}
-
-void Text::backspace(int x, int y)
+void Text::eraseSymbol(int x, int y)
 {
     if(!y && x){
         for(int i = 0; i < content_[x].length(); ++i)
@@ -401,18 +390,6 @@ void Text::deleteText(const QPoint &begin, const QPoint &end)
         for(int j = begin.y(); j < end.y(); ++j)
             content_[begin.x()].erase(begin.y());
     }
-}
-
-Symbol Text::getSymbol(int i, int j)
-{
-    if(i < 0) i = 0;
-    else if(i >= content_.length()) i = content_.length() - 1;
-    if(content_[i].isEmpty())
-        return Symbol();
-    if(j < 0) j = 0;
-    else if(j >= content_[i].length()) j = content_[i].length() - 1;
-
-    return content_[i][j];
 }
 
 int Text::getLineIndex(int pos, int edgeY) const
@@ -577,7 +554,7 @@ void Text::cutPart(Text* res, QPoint beginPos, QPoint endPos)
 
         for(int j = 0; j < content_[secondPos].size(); ++j)
             content_[beginPos.x()].push_back(content_[secondPos][j]);
-            erase(secondPos);
+        erase(secondPos);
     }
     else if(beginPos.x() == endPos.x()){
         for(int j = beginPos.y(); j < endPos.y(); ++j)
