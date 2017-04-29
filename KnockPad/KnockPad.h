@@ -51,8 +51,6 @@ public slots:
     void setBoldText();
     void setItalicText();
 
-signals:
-
 protected:
     void contextMenuEvent(QContextMenuEvent* pe);
     void closeEvent(QCloseEvent * closeEvent);
@@ -76,8 +74,6 @@ private:
 
     QString currentFileName;
     QTextEdit textEdit;
-    //QStringList
-
 };
 
 #endif

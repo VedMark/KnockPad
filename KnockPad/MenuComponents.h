@@ -3,6 +3,7 @@
 
 #include <QAction>
 #include <QtCore>
+#include <QComboBox>
 #include <QFileDialog>
 #include <QMenu>
 #include <QDialog>
@@ -41,6 +42,9 @@ public:
     QAction *fontBoldAction;
     QAction *fontItalicAction;
 
+    inline const QStringList& getFontList() const { return fonts; }
+    inline const QStringList& getFontSizeList() const { return fontSizes; }
+
 public slots:
 
 private:
@@ -51,6 +55,9 @@ private:
 
     QMenu *fontTypeMenu;
     QMenu *fontSizeMenu;
+
+    QStringList fonts;
+    QStringList fontSizes;
 };
 
 #endif
