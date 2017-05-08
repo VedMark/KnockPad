@@ -25,12 +25,10 @@ void Cursor::setCursor(QPoint pos, int h)
     setWidth(h);
     setHeigth(h);
 
-    rect_.setRect(pos.x(), pos.y(), rect_.width(), rect_.height());
+    rect_.setRect(pos.x() + edge_.x(), pos.y() + edge_.y(), rect_.width(), rect_.height());
 
     blink_ = true;
     holder_->update();
-
-    emit currentAddressChanged(this->cursorPosition());
 }
 
 QPoint Cursor::cursorPosition() const
@@ -43,12 +41,12 @@ void Cursor::setWidth(int CharHeight)
     rect_.setWidth(static_cast<int>(log(CharHeight ) / log(16)) + 1);
 }
 
-void Cursor::draw(QPainter *painter)
+void Cursor::draw(QPainter *painter, bool highlighted)
 {
     if(blink_)
         painter->fillRect(rect_, colorCursor_);
     else
-        painter->fillRect(rect_, colorBase_);
+        painter->fillRect(rect_, highlighted ? colorHighlighted_ : colorBase_);
 }
 
 void Cursor::updateCursor()

@@ -19,7 +19,7 @@ Symbol::Symbol(QChar value)
     value_ = QChar(value);
 }
 
-Symbol::Symbol(QFont font, QChar value)
+Symbol::Symbol(const QFont &font, QChar value)
 {
     font_ = QFont(font);
     fontMetrics_ = new QFontMetrics(font_);
@@ -87,11 +87,19 @@ Symbol& Line::operator[](int pos)
     return content_[pos];
 }
 
-qint64 Line::getWidth(int pos) const
+const Symbol& Line::at(int pos) const
+{
+    return content_[pos];
+}
+
+qint64 Line::getSymbShift(int s) const
 {
     int width = 0;
-    for(int i = 0; i < pos && i < content_.size(); ++i)
-        width += content_[i].width();
+    if(s > content_.size())
+        s = content_.size();
+    if(s > 0)
+        for(int i = 0; i < s; ++i)
+            width += content_[i].width();
     return width;
 }
 
@@ -100,7 +108,7 @@ qint64 Line::getMaxHeight() const
     qint64 max = 0;
     if(isEmpty())
         return height_;
-    foreach (Symbol symb, content_) {
+    foreach (const Symbol& symb, content_) {
         if(symb.height() > max)
             max = symb.height();
     }
@@ -152,8 +160,9 @@ Symbol Line::erase(int pos)
 {
     Symbol symb = content_[pos];
     width_ -= symb.width();
-    reduce_height(symb.height());
+    int h = symb.height();
     content_.erase(content_.begin() + pos);
+    reduce_height(h);
     return symb;
 }
 
@@ -168,34 +177,38 @@ int Line::getSymbolIndex(int pos, int edgeX) const
     return i;
 }
 
-int Line::getSymbolBegin(int x, int edgeX, int ind) const
+int Line::getSymbolBegin(int x, QPoint& pos) const
 {
-    qint64 shift = edgeX;
+    qint64 shift = 0;
     int i = 0;
-    if(x >= width_)
-        shift = width_ + edgeX;
-    else if(x <= edgeX)
-        shift = edgeX;
+    if(x >= width_){
+        shift = width_;
+        i = size();
+    }
+    else if(x <= 0)
+        shift = 0;
     else
     {
         while(shift < width_)
         {
             if(shift + content_.at(i).width() / 2 >= x)
                 break;
-            shift += content_.at(i).width();
+            shift += content_.at(i++).width();
         }
     }
-    if(ind == -1)
-        if(x <= edgeX);
-        else
-            shift -= content_.at(i).width();
-    else if(ind == 1){
-        if(x >= width_);
-        else
-            shift += content_.at(i).width();
-    }
+    pos.setX(i);
     return shift;
 
+}
+
+int Line::getDifference(int s) const
+{
+    if(isEmpty())
+        return 0;
+    s = s == content_.size() ? s - 1 : s;
+    return content_[s].height() < height() ?
+           (height() - content_[s].height()) * 0.8 :
+           0;
 }
 
 Line Line::getNewLine(int pos)
@@ -203,7 +216,7 @@ Line Line::getNewLine(int pos)
     if(content_.isEmpty())
         return Line(height_, parent());
     int count = content_.size() - pos;
-    qint64 height = content_[pos ? count : count - 1].height();
+    qint64 height = content_[pos == content_.length() ? pos - 1 : pos].height();
     Line newLine = Line(height, parent());
 
     while(count--)
@@ -214,15 +227,17 @@ Line Line::getNewLine(int pos)
 
 void Line::raise_height(int h)
 {
-    if(h > height_)
+    if(isEmpty())
+        height_ = h;
+    else if(h > height_)
         height_ = h;
 }
 
 void Line::reduce_height(int h)
 {
+    int heighest = isEmpty() ? height_ : 0;
     if(h == height_)
     {
-        int heighest = 0;
         foreach(Symbol symb, content_)
         {
             if(symb.height() > heighest)
@@ -231,7 +246,6 @@ void Line::reduce_height(int h)
         if(heighest < height_)
         {
             height_ = heighest;
-            emit heightChanged();
         }
     }
 }
@@ -285,7 +299,7 @@ Line& Text::operator[](int pos)
 
 Line Text::erase(int pos)
 {
-    reduce_height(content_[pos].getHeight());
+    reduce_height(content_[pos].height());
     Line line = content_[pos];
     content_.erase(content_.begin() + pos);
     return line;
@@ -299,17 +313,18 @@ void Text::insert(int pos, const Line& line)
 
 void Text::insert(int posX, int posY, const Symbol &symb)
 {
-    content_[posX].insert(posY, symb);
-    int h = symb.height() - content_[posX].getHeight();
+    int h = symb.height() - content_[posY].getMaxHeight();
+    content_[posY].insert(posX, symb);
     if(h > 0)
         raise_height(h);
+    return ;
 }
 
 Line& Text::pop_front()
 {
     Line& line = content_.first();
     content_.pop_front();
-    reduce_height(line.getHeight());
+    reduce_height(line.height());
     return line;
 }
 
@@ -317,20 +332,20 @@ Line& Text::pop_back()
 {
     Line& line = content_.last();
     content_.pop_back();
-    reduce_height(line.getHeight());
+    reduce_height(line.height());
     return line;
 }
 
 void Text::push_front(const Line &line)
 {
     content_.push_front(line);
-    raise_height(line.getHeight());
+    raise_height(line.height());
 }
 
 void Text::push_back(const Line &line)
 {
     content_.push_back(line);
-    raise_height(line.getHeight());
+    raise_height(line.height());
 }
 
 Symbol Text::getSymbol(int i, int j)
@@ -345,16 +360,23 @@ Symbol Text::getSymbol(int i, int j)
     return content_[i][j];
 }
 
-void Text::eraseSymbol(int x, int y)
+void Text::eraseSymbol(int l, int s, QPoint& pos)
 {
-    if(!y && x){
-        for(int i = 0; i < content_[x].length(); ++i)
-            content_[x - 1].push_back(content_[x][i]);
-        reduce_height(content_[x].getHeight());
-        content_.erase(content_.begin() + x);
+    if(!s && l){
+        for(int i = 0; i < content_[l].length(); ++i)
+            content_[l - 1].push_back(content_[l][i]);
+        reduce_height(content_[l].height());
+        content_.erase(content_.begin() + l);
+        pos = QPoint(content_[l - 1].size(), l - 1);
         }
-    else if(y)
-        content_[x].erase(y - 1);
+    else if(s){
+        int h = content_[l].height();
+        content_[l].erase(s - 1);
+        if(!content_[l].isEmpty()){
+            reduce_height(h - content_[l].getMaxHeight());
+        pos = QPoint(s - 1, l);
+        }
+    }
 }
 
 qint64 Text::getHeight(int index) const
@@ -362,30 +384,30 @@ qint64 Text::getHeight(int index) const
     qint64 y = 0;
     LineList::const_iterator it = content_.begin();
     for(; it != content_.begin() + index; ++ it)
-        y += it->getHeight();
+        y += it->height();
     return y;
 }
 
 void Text::deleteText(const QPoint &begin, const QPoint &end)
 {
-    if(begin.x() < end.x())
+    if(begin.y() < end.y())
     {
-        int i = begin.x();
-        content_[i].getNewLine(begin.y());
-        for(i++; i < end.x(); ++i){
-            erase(begin.x() + 1);
+        int i = begin.y();
+        content_[i].getNewLine(begin.x());
+        for(i++; i < end.y(); ++i){
+            erase(begin.y() + 1);
         }
-        for(int j = 0; j < end.y(); ++j)
-            content_[begin.x() + 1].erase(0);
+        for(int j = 0; j < end.x(); ++j)
+            content_[begin.y() + 1].erase(0);
 
-        while(content_[begin.x() + 1].length())
-            content_[begin.x()].push_back(content_[begin.x() + 1].erase(0));
-        erase(begin.x() + 1);
+        while(content_[begin.y() + 1].length())
+            content_[begin.y()].push_back(content_[begin.y() + 1].erase(0));
+        erase(begin.y() + 1);
     }
     else
     {
-        for(int j = begin.y(); j < end.y(); ++j)
-            content_[begin.x()].erase(begin.y());
+        for(int j = begin.x(); j < end.x(); ++j)
+            content_[begin.y()].erase(begin.x());
     }
 }
 
@@ -393,84 +415,109 @@ int Text::getLineIndex(int pos, int edgeY) const
 {
     int shift = edgeY;
     int i = 0;
+
     while(shift < pos && shift < height_)
     {
-        shift += content_[i++].getHeight();
+        shift += content_[i++].height();
     }
+    if(shift > pos) --i;
     return i;
 }
 
-QPoint Text::getShiftByCoord(QPoint point, QPoint edge, int indX, int indY) const
+int Text::getLineShift(int l , int s) const
 {
-    qint64 shiftY = edge.y();
-    qint64 shiftX = edge.x();
-    qint64 i = 0;
-    if(point.y() >=  edge.y() + height_)
+    int Y = getLineRoof(l);
+    if(s <= 0)
+        s = 0;
+    else
+        s = s >= content_[l].size() ? content_[l].size() - 1 : s;
+    Y += l > 0 ? content_[l].getDifference(s) : content_[0].getDifference(s);
+    return Y;
+}
+
+int Text::getLineRoof(int l) const
+{
+    int Y = 0;
+    if(l >= content_.size())
+        l = content_.size() - 1;
+    if(l >= 0)
     {
-        shiftX = edge.x() + content_.last().getWidth();
-        shiftY = edge.y() + height_ - content_.last().getHeight();
+        for(int i = 0; i < l; ++i)
+            Y += content_[i].height();
+    }
+    return Y;
+}
+
+QPoint Text::getShiftByCoord(QPoint point, QPoint& pos) const
+{
+    qint64 shiftY = 0;
+    qint64 shiftX = 0;
+    qint64 i = 0;
+    if(point.y() >=  height_)
+    {
+        shiftX = content_.last().getWidth();
+        shiftY = height_ - content_.last().height();
+        pos.setX(content_[content_.size() - 1].size());
+        pos.setY(content_.size() - 1);
     }
     else
     {
-        if(point.y() <= edge.y())
-            shiftY = edge.y();
+        if(point.y() <= 0)
+            shiftY = 0;
         else
             while(shiftY < height_)
             {
-                if(shiftY + content_.at(i).getHeight() > point.y())
+                if(shiftY + content_.at(i).height() > point.y())
                     break;
-                    shiftY += content_.at(i++).getHeight();
+                    shiftY += content_.at(i++).height();
             }
-        if(indY == -1){
-            if(point.y() <= edge.y());
-            else
-                shiftY -= content_.at(i).getHeight();
-        }
-        else if(indY == 1){
-            if(point.y() >= height_ - content_.last().getHeight() + edge.y());
-            else
-                shiftY += content_.at(i).getHeight();
-        }
-
-        if((i == content_.length() - 1 && indY == 1) || (!i && indY == -1))
-            shiftX = content_.at(i).getSymbolBegin(point.x(), edge.x(), indX);
-        else if(indX == -1 && point.x() == edge.x()){
-                if(i){
-                    shiftX = content_.at(i - 1).getWidth() + edge.x();
-                    shiftY -= content_.at(i - 1).getHeight();
-                }
-            }
-            else if (indX == 1
-                     && point.x() == content_.at(i).getWidth() + edge.x()
-                     && i!= content_.length() - 1){
-                shiftX = edge.x();
-                shiftY += content_.at(i).getHeight();
-            }
-        else
-            shiftX = content_.at(i + indY).getSymbolBegin(point.x(), edge.x(), indX);
+        shiftX = content_.at(i).getSymbolBegin(point.x(), pos);
+        pos.setY(i);
     }
+    shiftY += content_[pos.y()].getDifference(pos.x());
     return QPoint(shiftX, shiftY);
 }
 
-Symbol* Text::getSymbByCoord(QPoint point, QPoint edge)
+QPoint Text::getShiftByPos(int x, int y, QPoint& pos) const
 {
-    qint64 shiftX = edge.x();
-    qint64 shiftY = edge.y();
-    qint64 i = 0;
-    qint64 j = 0;
+    int X = 0;
+    int Y = 0;
 
-    Line line(this);
-    while(shiftY < point.y())
-        shiftY += content_.at(i++).getHeight();
-
-    line = content_.at(i);
-    while(shiftX < point.x())
-        shiftX += line[j++].width();
-
-    if(j == line.size() && line.size()) j--;
-    if(line.isEmpty())
-        return NULL;
-    return &line[j];
+    if(y < 0)
+        y = 0;
+    else if(y >= content_.size())
+        y = content_.size() - 1;
+    if(x < 0){
+        if(y > 0){
+            x = content_[y - 1].size();
+            X = content_[y - 1].getSymbShift(content_[y - 1].length());
+            y = y - 1;
+            Y = getLineShift(y, content_[y].length());
+        }
+        else{
+            x = 0;
+            Y += content_[y].getDifference(0);
+        }
+    }
+    else if(x > content_[y].size()){
+        if(y < content_.size() - 1){
+            x = 0;
+            X = content_[++y].getSymbShift(0);
+            Y = getLineShift(y, x);
+        }
+        else{
+            x--;
+            X = content_[y].getWidth();
+            Y = getLineShift(y, x);
+        }
+    }
+    else{
+        X = content_[y].getSymbShift(x);
+        Y = getLineShift(y, x);
+    }
+    pos.setX(x);
+    pos.setY(y);
+    return QPoint(X, Y);
 }
 
 void Text::draw(QPainter *painter, QPoint edge)
@@ -479,107 +526,108 @@ void Text::draw(QPainter *painter, QPoint edge)
     qint64 y = edge.y();
     for(int i = 0; i < content_.length(); ++i){
         for(int j = 0; j < content_[i].length(); ++j){
+            painter->setFont(content_[i][j].font());
             painter->drawText(x,
-                      content_[i].getHeight() * 0.9 + y,
+                      content_[i].height() * 0.8 + y,
                       content_[i][j].value());
             x += content_[i][j].width();
         }
         x = edge.x();
-        y += content_[i].getHeight();
+        y += content_[i].height();
     }
 }
 
 void Text::copyPart(Text* res, QPoint beginPos, QPoint endPos)
 {
-    if(beginPos.x() > endPos.x())
-        return;
-
     if(res != Q_NULLPTR)
         delete res;
 
     res = new Text(parent());
     Line line(this);
-    if(beginPos.x() < endPos.x())
+    if(beginPos.y() < endPos.y())
     {
-        if(content_[beginPos.x()].isEmpty() && beginPos.x() < endPos.x())
-            res->push_back(Line(content_[beginPos.x()].getHeight(), this));
+        if(content_[beginPos.y()].isEmpty() && beginPos.y() < endPos.y())
+            res->push_back(Line(content_[beginPos.y()].height(), this));
         else{
-            for(int j = beginPos.y(); j < content_[beginPos.x()].size(); ++j)
-                line.push_back(Symbol(content_[beginPos.x()][j]));
+            for(int j = beginPos.x(); j < content_[beginPos.y()].size(); ++j)
+                line.push_back(Symbol(content_[beginPos.y()][j]));
             res->push_back(line);
         }
 
-        for(int i = beginPos.x() + 1; i < endPos.x(); ++i)
+        for(int i = beginPos.y() + 1; i < endPos.y(); ++i)
             res->push_back(Line(content_[i]));
 
         line = Line(this);
-        for(int j = 0; j < endPos.y(); ++j)
-            line.push_back(Symbol(content_[endPos.x()][j]));
+        for(int j = 0; j < endPos.x(); ++j)
+            line.push_back(Symbol(content_[endPos.y()][j]));
         if(!line.isEmpty())
             res->push_back(line);
     }
-    else if(beginPos.x() == endPos.x()){
-        for(int j = beginPos.y(); j < endPos.y(); ++j)
-            line.push_back(Symbol(content_[beginPos.x()][beginPos.y()]));
+    else if(beginPos.y() == endPos.y()){
+        for(int j = beginPos.x(); j < endPos.x(); ++j)
+            line.push_back(Symbol(content_[beginPos.y()][j]));
         res->push_back(line);
     }
 }
 
 void Text::cutPart(Text* res, QPoint beginPos, QPoint endPos)
 {
-    if(beginPos.x() > endPos.x())
-        return;
-
     if(res != Q_NULLPTR)
         delete res;
 
     res = new Text(parent());
     Line line(this);
-    if(beginPos.x() < endPos.x())
+    if(beginPos.y() < endPos.y())
     {
-        int secondPos = beginPos.x() + 1;
-        res->push_back(content_[beginPos.x()].getNewLine(beginPos.y()));
+        int secondPos = beginPos.y() + 1;
+        res->push_back(content_[beginPos.y()].getNewLine(beginPos.x()));
 
-        for(int i = secondPos; i < endPos.x(); ++i)
+        for(int i = secondPos; i < endPos.y(); ++i)
             res->push_back(erase(secondPos));
 
         line = Line(this);
-        for(int j = 0; j < endPos.y(); ++j)
+        for(int j = 0; j < endPos.x(); ++j)
             line.push_back(content_[secondPos].erase(0));
         if(!line.isEmpty())
             res->push_back(line);
 
         for(int j = 0; j < content_[secondPos].size(); ++j)
-            content_[beginPos.x()].push_back(content_[secondPos][j]);
+            content_[beginPos.y()].push_back(content_[secondPos][j]);
         erase(secondPos);
     }
-    else if(beginPos.x() == endPos.x()){
-        for(int j = beginPos.y(); j < endPos.y(); ++j)
-            line.push_back(content_[beginPos.x()].erase(beginPos.y()));
+    else if(beginPos.y() == endPos.y()){
+        for(int j = beginPos.x(); j < endPos.x(); ++j)
+            line.push_back(content_[beginPos.y()].erase(beginPos.x()));
         res->push_back(line);
     }
 }
-void Text::insertPart(Text* source, QPoint pos)
+
+void Text::insertPart(Text* source, QPoint& pos)
 {
-    Line line = content_[pos.x()].getNewLine(pos.y());
-    for(int j = 0; j < (*source)[0].length(); ++j)
-        content_[pos.x()].push_back(Symbol((*source)[0][j]));
+    Line line = content_[pos.y()].getNewLine(pos.x());
+    if((*source)[0].isEmpty() && (*source)[source->length() - 1].isEmpty()){
+        insert(pos.y(), (*source)[0]);
+        pos.setY(pos.y() + 1);
+    }
+    else
+        for(int j = 0; j < (*source)[0].length(); ++j)
+            content_[pos.y()].push_back(Symbol((*source)[0][j]));
 
     for(int j = 1; j < source->length(); ++j)
-        insert(pos.x() + j, Line((*source)[j]));
+        insert(pos.y() + j, Line((*source)[j]));
 
+    pos.setX((*source)[source->length() - 1].length());
     for(int j = 0; j < line.length(); ++j)
-        content_[pos.x() + source->length() - 1].push_back(Symbol(line[j]));
+        content_[pos.y() + source->length() - 1].push_back(Symbol(line[j]));
+    pos.setY(pos.y() + source->length() - 1);
 }
 
 void Text::raise_height(int h)
 {
     height_ += h;
-    emit heightChanged();
 }
 
 void Text::reduce_height(int h)
 {
     height_ -= h;
-    emit heightChanged();
 }

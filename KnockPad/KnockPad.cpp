@@ -13,7 +13,7 @@ KnockPad::KnockPad() : QMainWindow()
     statusBar = new StatusBar(this);
     setStatusBar(statusBar);
 
-    textField = new TextField(QString("Monospace"), 14, this);
+    textField = new TextField(editToolBar->getFontType(), editToolBar->getFontSize(), this);
     textField->setFocus();
     setCentralWidget(textField);
     textField->setTextEditorView(Qt::white);
@@ -38,7 +38,9 @@ KnockPad::KnockPad() : QMainWindow()
     connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
     connect(textField, SIGNAL( posChanged(QPoint) ), statusBar, SLOT(updateStatusBar(QPoint)) );
-    connect(editToolBar->getSizeBox(), SIGNAL( editTextChanged(QString) ), textField, SLOT( changeCurrentFontSize(QString) ) );
+    connect(editToolBar->getFontBox(), SIGNAL( activated(QString) ), textField, SLOT( changeCurrentFont(QString) ) );
+    connect(editToolBar->getSizeBox(), SIGNAL(activated(QString)), textField, SLOT( changeCurrentFontSize(QString) ) );
+    connect(textField, SIGNAL( fontChanged(const QFont&)), editToolBar, SLOT( changeToolBarFonts(const QFont&) ));
 
     this->setWindowTitle(tr("KnockPad"));
 

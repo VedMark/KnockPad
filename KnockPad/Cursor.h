@@ -35,6 +35,11 @@ public:
     inline QColor colorBase() const { return colorBase_; }
     inline void setColorBase(QColor color) { colorBase_ = color; }
 
+    inline QColor colorHighlighted() const { return colorHighlighted_; }
+    inline void setColorHighlighted(QColor color) { colorHighlighted_ = color; }
+
+    inline QPoint getTopLeft() const { return rect_.topLeft(); }
+
     inline int x() const { return rect_.x(); }
     inline void setX(int x) { rect_.setX(x); }
 
@@ -55,7 +60,7 @@ public:
         rect_.setY(rect_.y() + edge.y());
     }
 
-    void draw(QPainter *painter);
+    void draw(QPainter *painter, bool highlighted);
 
 signals:
     void currentAddressChanged(QPoint address);
@@ -71,6 +76,7 @@ private:
 
     QColor colorCursor_;
     QColor colorBase_;
+    QColor colorHighlighted_;
     QPoint edge_;
     bool blink_;
 };

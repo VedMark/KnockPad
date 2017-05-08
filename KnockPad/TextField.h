@@ -23,7 +23,6 @@ public:
     ~TextField();
 
     void setTextEditorView(Qt::GlobalColor color);
-    void setFont(const QFont &font);
     void clear();
 
     QPoint getShiftByCoord(QPoint point);
@@ -36,11 +35,9 @@ public:
     inline bool isSelected() const { return selected_; }
     inline void setSelected(bool selected) { selected_ = selected; }
 
-    inline QPoint getCurrentPos() const { return curPos_; }
-    inline void setCurrentPos(const QPoint& curPos) {
-        curPos_ = curPos;
-        emit posChanged(curPos_);
-    }
+    inline int getCurPosX() const;
+    inline int getCurPosY() const;
+    inline void setCurrentPos(const QPoint& curPos);
 
     void copy();
     void cut();
@@ -48,16 +45,14 @@ public:
     void selectAll();
 
 public slots:
-    void changeCurrentFontSize(const QString&);
-    void changeCurrentFont(const QString&);
+    void changeCurrentFontSize(const QString &font);
+    void changeCurrentFont(const QString &font);
     void changeToItalics();
     void changeToBold();
 
 signals:
     void posChanged(QPoint);
-//    void currentSizeChanged(qint64 size);
-//    void curLineIndexChanged(int);
-//    void curSymbIndexChanged(int);
+    void fontChanged(const QFont&);
 
 protected:
     void keyPressEvent(QKeyEvent *);
@@ -79,9 +74,9 @@ private:
     inline void _erase_highlighted_text();
     inline const QPoint& minPoint(const QPoint&, const QPoint&) const;
     inline const QPoint& maxPoint(const QPoint&, const QPoint&) const;
-    inline const QPoint& minPos(const QPoint&, const QPoint&) const;
-    inline const QPoint& maxPos(const QPoint&, const QPoint&) const;
     inline void _reset_selection();
+    inline void _set_cursor_points(QPoint p);
+    inline void _change_cursor(QPoint p);
 
 private:
     QWidget *field_;
@@ -101,7 +96,6 @@ private:
     QPoint selectionPos_;
     bool selected_;
 
-    QFont currentFont;
     int currentFontSize;
 };
 

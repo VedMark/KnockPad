@@ -17,6 +17,14 @@ EditToolBar::~EditToolBar()
     delete sizeBox;
 }
 
+
+void EditToolBar::changeToolBarFonts(const QFont& f)
+{
+    sizeBox->setCurrentText(QString::number(f.pointSize()));
+    fontBox->setCurrentText(f.family());
+}
+
+
 void EditToolBar::createToolBar()
 {
     components->addFileActions(this);
@@ -26,10 +34,12 @@ void EditToolBar::createToolBar()
 
     fontBox->addItems(components->getFontList());
     this->addWidget(fontBox);
+    fontBox->setCurrentIndex(3);
 
     sizeBox->addItems(components->getFontSizeList());
     addWidget(sizeBox);
     sizeBox->setEditable(true);
+    sizeBox->setCurrentIndex(3);
 
     addAction(components->fontBoldAction);
     addAction(components->fontItalicAction);

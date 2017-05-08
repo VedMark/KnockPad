@@ -45,5 +45,4 @@ HEADERS  += \
     StatusBar.h \
     Recorder.h \
     Cursor.h \
-    Text.h \
-    Cursor.h
+    Text.h

@@ -9,7 +9,7 @@ MenuComponents::MenuComponents(QWidget *parent)
     this->fontTypeMenu = new QMenu(tr("Font"), this);
     this->fontSizeMenu = new QMenu(tr("Size"), this);
 
-    fonts << "Arial" << "Helvetica" << "Times New Roman";
+    fonts << "Arial" << "Helvetica" << "Monospace" << "Times New Roman";
 
     fontSizes << "4" << "8" << "12" << "14" << "16" << "18" << "20"
               << "24" << "28" << "32" << "36" << "40" << "48" << "56"

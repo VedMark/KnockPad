@@ -12,17 +12,6 @@ TextField::TextField(QString fontName, int fontSize, QWidget *parent)
 
     setFont(QFont(fontName, fontSize));
 
-    cursor_ = new Cursor(viewport(), this);
-    cursor_->setEdge(edge_);
-    cursor_->setCursor(edge_, QFontMetrics(font()).height());
-    cursor_->setColorCursor(viewport()->palette().color(QPalette::WindowText));
-    cursor_->setColorBase(viewport()->palette().color(QPalette::Base));
-
-    textLines_ = new Text(QFontMetrics(font()).height(), this);
-    textLines_->setCurrentFont(&font());
-
-    textBuffer_= new Text(QFontMetrics(font()).height(), this);
-
     highlightningColor_ = QColor(0xff, 0x66, 0x00);
     this->palette().highlight().color();
     selectionBegin_ = edge_;
@@ -30,6 +19,18 @@ TextField::TextField(QString fontName, int fontSize, QWidget *parent)
     selectionPos_ = QPoint(0, 0);
     setSelected(false);
     setCurrentPos(QPoint(0, 0));
+
+    cursor_ = new Cursor(viewport(), this);
+    cursor_->setEdge(edge_);
+    cursor_->setCursor(QPoint(0, 0), QFontMetrics(font()).height());
+    cursor_->setColorCursor(viewport()->palette().color(QPalette::WindowText));
+    cursor_->setColorBase(viewport()->palette().color(QPalette::Base));
+    cursor_->setColorHighlighted(highlightningColor_);
+
+    textLines_ = new Text(QFontMetrics(font()).height(), this);
+    textLines_->setCurrentFont(&font());
+
+    textBuffer_= new Text(QFontMetrics(font()).height(), this);
 
     setCapsLock(false);
 
@@ -44,24 +45,32 @@ TextField::~TextField()
     delete textLines_;
 }
 
-void TextField::changeCurrentFontSize(const QString&)
+void TextField::changeCurrentFontSize(const QString& fontSize)
 {
-
+    setFocus();
+    setFont(QFont(font().family(), fontSize.toInt()));
 }
 
-void TextField::changeCurrentFont(const QString&)
+void TextField::changeCurrentFont(const QString& fontName)
 {
-
+    setFocus();
+    setFont(QFont(fontName, font().pointSize()));
 }
 
 void TextField::changeToItalics()
 {
-
+    bool italic = font().italic() ? false : true;
+    QFont font = QFont();
+    font.setItalic(italic);
+    setFont(font);;
 }
 
 void TextField::changeToBold()
 {
-
+    bool bold = font().bold() ? false : true;
+    QFont font = QFont();
+    font.setBold(bold);
+    setFont(font);
 }
 
 //View public actions
@@ -78,18 +87,11 @@ void TextField::setTextEditorView(Qt::GlobalColor color)
     field_->setCursor(Qt::IBeamCursor);
 }
 
-void TextField::setFont(const QFont &font)
-{
-    QWidget::setFont(font);\
-
-    viewport()->update();
-}
-
 void TextField::clear()
 {
     selectAll();
     QPoint p = _handle_backspace();
-    _change_positions(p);
+    _set_cursor_points(p);
 }
 
 bool TextField::readFile(const QString &fileName)
@@ -106,8 +108,8 @@ bool TextField::writeFile(const QString &fileName)
 
 void TextField::keyPressEvent(QKeyEvent *event)
 {
-    int x = cursor_->x();
-    int y = cursor_->y();
+    int x = cursor_->x() - edge_.x();
+    int y = cursor_->y() - edge_.y();
     QPoint p = QPoint(x, y);
 
     if(event->matches(QKeySequence::Copy))
@@ -116,8 +118,10 @@ void TextField::keyPressEvent(QKeyEvent *event)
         cut();
     else if(event->matches(QKeySequence::Paste))
         paste();
-    else if(event->matches(QKeySequence::SelectAll))
+    else if(event->matches(QKeySequence::SelectAll)){
         selectAll();
+        return;
+    }
 
     else if((event->key() >= 0x20 && event->key() <= 0x7E) ||
             (event->key() >= 0x410 && event->key() <= 0x42f) ||
@@ -134,8 +138,8 @@ void TextField::keyPressEvent(QKeyEvent *event)
         else if(QApplication::keyboardModifiers() == Qt::ShiftModifier)
                 if(capsLock())
                     in_char = in_char.toLower();
-        textLines_->insert(curPos_.x(), curPos_.y(), Symbol(in_char));
-        p = textLines_->getShiftByCoord(selectionBegin_, edge_, 1, 0);
+        textLines_->insert(curPos_.x(), curPos_.y(), Symbol(font(), in_char));
+        p = textLines_->getShiftByPos(curPos_.x() + 1, curPos_.y(), curPos_);
     }
 
     else if(event->key() == Qt::Key_Return)
@@ -146,138 +150,132 @@ void TextField::keyPressEvent(QKeyEvent *event)
         setCapsLock(capsLock() ? false : true);
 
     else if(event->matches(QKeySequence::MoveToNextChar))
-        p = textLines_->getShiftByCoord(QPoint(x,y), edge_, 1, 0);
+        p = textLines_->getShiftByPos(curPos_.x() + 1, getCurPosY(), curPos_);
     else if(event->matches(QKeySequence::MoveToEndOfLine))
-        p = textLines_->getShiftByCoord(QPoint((*textLines_)[curPos_.x()].getWidth() + edge_.x(), y), edge_);
+        p = textLines_->getShiftByPos((*textLines_)[curPos_.y()].size(), curPos_.y(), curPos_);
     else if(event->matches(QKeySequence::MoveToPreviousChar))
-        p = textLines_->getShiftByCoord(QPoint(x,y), edge_, -1, 0);
+        p = textLines_->getShiftByPos(curPos_.x() - 1, getCurPosY(), curPos_);
     else if(event->matches(QKeySequence::MoveToStartOfLine))
-        p = textLines_->getShiftByCoord(QPoint(edge_.x(), y), edge_);
-    else if(event->matches(QKeySequence::MoveToNextLine))
-        p = textLines_->getShiftByCoord(QPoint(x,y), edge_, 0, 1);
-    else if(event->matches(QKeySequence::MoveToPreviousLine))
-        p = textLines_->getShiftByCoord(QPoint(x,y), edge_, 0, -1);
-    else if(event->matches(QKeySequence::MoveToStartOfDocument))
-        p = textLines_->getShiftByCoord(edge_, edge_);
-    else if(event->matches(QKeySequence::MoveToEndOfDocument)) {
-        p = textLines_->getShiftByCoord(_get_end_document(), edge_);
+        p = textLines_->getShiftByPos(0, curPos_.y(), curPos_);
+    else if(event->matches(QKeySequence::MoveToNextLine)){
+        if(curPos_.y() != textLines_->length() - 1){
+            curPos_.setY(curPos_.y() + 1 >= textLines_->length() ?
+                             textLines_->length() - 1 :
+                             curPos_.y() + 1);
+            x = (*textLines_)[curPos_.y()].getSymbolBegin(x, curPos_);
+            y = (*textLines_).getLineShift(curPos_.y(), curPos_.x());
+            p = QPoint(x, y);
+        }
     }
-    if(p != QPoint(x, y))
-        _change_positions(p);
+    else if(event->matches(QKeySequence::MoveToPreviousLine)){
+        curPos_.setY(curPos_.y() - 1 <= 0 ? 0 : curPos_.y() - 1);
+        p = QPoint((*textLines_)[curPos_.y()].getSymbolBegin(x, curPos_),
+                   (*textLines_).getLineShift(curPos_.y(), curPos_.x()));
+    }
+    else if(event->matches(QKeySequence::MoveToStartOfDocument))
+        p = textLines_->getShiftByPos(0, 0, curPos_);
+    else if(event->matches(QKeySequence::MoveToEndOfDocument)) {
+        p = textLines_->getShiftByPos((*textLines_)[(*textLines_).length() - 1].size(),
+                (*textLines_).length(), curPos_);
+    }
+    else
+        return;
+     _set_cursor_points(p);
 }
 
 void TextField::mouseMoveEvent(QMouseEvent * event)
 {
-    QPoint p = textLines_->getShiftByCoord(QPoint(event->x(),event->y()), edge_);
-    Symbol* symb = textLines_->getSymbByCoord(p, edge_);
-    if(symb != NULL)
-        cursor_->setCursor(p, symb->height());
-    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
-                 (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
-    _set_selection_end(p);
+    QPoint p = textLines_->getShiftByCoord(QPoint(event->x() - edge_.x(), event->y() - edge_.y()),
+                                           curPos_);
+
+    _change_cursor(p);
+    _set_selection_end(QPoint(p.x(), (*textLines_).getLineRoof(getCurPosY())));
     setSelected(true);
 }
 
 void TextField::mousePressEvent(QMouseEvent * event)
 {
-    QPoint p = textLines_->getShiftByCoord(QPoint(event->x(),event->y()), edge_);
-    Symbol* symb = textLines_->getSymbByCoord(p, edge_);
-    if(symb != NULL)
-        cursor_->setCursor(p, symb->height());
-    else
-        cursor_->setCursor(p, (*textLines_)[textLines_->getLineIndex(p.x(), p.y())].getHeight());
-    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
-                  (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
-    _set_selection_pos(curPos_);
-    _set_selection_begin(p);
-    _set_selection_end(p);
+    QPoint curPoint = QPoint(event->x() - edge_.x(), event->y() - edge_.y());
+    QPoint p = textLines_->getShiftByCoord(curPoint, curPos_);
+    _set_cursor_points(p);
 }
 
 void TextField::paintEvent(QPaintEvent *)
 {
     QPainter painter(viewport());
-    cursor_->draw(&painter);
     if(selectionBegin_ != selectionEnd_)
     {
         const QPoint& beginSelect = minPoint(selectionBegin_, selectionEnd_);
         const QPoint& endSelect = maxPoint(selectionBegin_, selectionEnd_);
         _fill_highlightning_rect(painter, beginSelect, endSelect);
+        cursor_->draw(&painter, true);
     }
+    else
+        cursor_->draw(&painter, false);
     textLines_->draw(&painter, edge_);
+}
+
+int TextField::getCurPosX() const
+{
+    if((*textLines_)[curPos_.y()].isEmpty())
+        return 0;
+    return curPos_.x() == (*textLines_)[curPos_.y()].length() ?
+            curPos_.x() - 1 :
+            curPos_.x();
+}
+
+int TextField::getCurPosY() const
+{
+    return curPos_.y();
+}
+
+void TextField::setCurrentPos(const QPoint& curPos) {
+    curPos_ = curPos;
+    emit posChanged(curPos_);
 }
 
 void TextField::copy()
 {
     textLines_->copyPart(textBuffer_,
-                minPos(curPos_, selectionPos_),
-                maxPos(curPos_, selectionPos_));
+                minPoint(curPos_, selectionPos_),
+                maxPoint(curPos_, selectionPos_));
 }
 
 void TextField::cut()
 {
     textLines_->cutPart(textBuffer_,
-                minPos(curPos_, selectionPos_),
-                maxPos(curPos_, selectionPos_));
-    setCurrentPos(minPos(curPos_, selectionPos_));
-    _change_positions(minPoint(selectionBegin_, selectionEnd_));
-    _change_positions(minPoint(selectionBegin_, selectionEnd_));
+                minPoint(curPos_, selectionPos_),
+                maxPoint(curPos_, selectionPos_));
+    setCurrentPos(minPoint(curPos_, selectionPos_));
+    _set_cursor_points(textLines_->getShiftByPos(curPos_.x(), curPos_.y(), curPos_));
 }
 
 void TextField::paste()
 {
-    int x = 0;
-    int y = 0;
-
     if(isSelected())
         _erase_highlighted_text();
     textLines_->insertPart(textBuffer_, curPos_);
-    if(textLines_->length() > 1){
-        x = (*textBuffer_)[textBuffer_->length() - 1].getWidth()
-                + edge_.x();
-        y = textLines_->getHeight(curPos_.x())
-                + textBuffer_->getHeight(textBuffer_->length() - 1) + edge_.y();
-    }
-    else{
-        x = (*textLines_)[curPos_.x()].getWidth(curPos_.y())
-                + (*textBuffer_)[textBuffer_->length() - 1].getWidth()
-                + edge_.x();
-        y = textLines_->getHeight(curPos_.x()) + edge_.y();
-    }
-    _change_positions(QPoint(x, y));
+    int x = (*textLines_)[curPos_.y()].getSymbShift(curPos_.x());
+    int y = textLines_->getLineShift(curPos_.y(), curPos_.x());
+    _set_cursor_points(QPoint(x, y));
 }
 
 void TextField::selectAll()
 {
     setSelected(true);
-    selectionBegin_ = edge_;
+    selectionBegin_ = QPoint(0, 0);
     selectionEnd_ = _get_end_document();
     selectionPos_ = QPoint(0, 0);
-    setCurrentPos(QPoint(textLines_->length() - 1,
-                     (*textLines_)[textLines_->length() - 1].length()));
+    _change_cursor((*textLines_).getShiftByPos(
+                        (*textLines_)[textLines_->length() - 1].length(),
+                        textLines_->length() - 1,
+                        curPos_));
 }
 
 QPoint TextField::_get_end_document()
 {
     Line* lasLine = &(*textLines_)[textLines_->length() - 1];
-    return QPoint(lasLine->getWidth() + edge_.x(),
-                  textLines_->getHeight() - lasLine->getHeight() + edge_.y());
-}
-
-void TextField::_change_positions(QPoint p)
-{
-    setCurrentPos(QPoint(textLines_->getLineIndex(p.y(), edge_.y()),
-                  (*textLines_)[curPos_.x()].getSymbolIndex(p.x(), edge_.x())));
-    _set_selection_pos(curPos_);
-    _set_selection_begin(p);
-    _set_selection_end(p);
-
-    const Symbol& symb = textLines_->getSymbol(curPos_.x(), curPos_.y());
-    if(symb.value() == QChar()){
-        QFontMetrics metrics(font());
-        cursor_->setCursor(p, metrics.height());
-    }
-    else
-        cursor_->setCursor(p, symb.height());
+    return QPoint(lasLine->getWidth(), textLines_->getHeight() - lasLine->height());
 }
 
 QPoint TextField::_handle_backspace()
@@ -285,12 +283,11 @@ QPoint TextField::_handle_backspace()
     QPoint p;
     if(isSelected()){
         _erase_highlighted_text();
-        p = minPoint(selectionBegin_, selectionEnd_);
     }
     else{
-        p = textLines_->getShiftByCoord(minPoint(selectionBegin_, selectionEnd_), edge_, -1, 0);
-        textLines_->eraseSymbol(curPos_.x(), curPos_.y());
+        textLines_->eraseSymbol(curPos_.y(), curPos_.x(), curPos_);
     }
+    p = textLines_->getShiftByPos(curPos_.x(), curPos_.y(), curPos_);
     return p;
 }
 
@@ -298,59 +295,60 @@ QPoint TextField::_handle_enter()
 {
     if(isSelected())
         _erase_highlighted_text();
-    Line line = (*textLines_)[curPos_.x()].getNewLine(curPos_.y());
-    textLines_->insert(curPos_.x() + 1, line);
-    return QPoint(edge_.x(), selectionBegin_.y() + (*textLines_)[curPos_.x()].getHeight());
+    Line line = (*textLines_)[getCurPosY()].getNewLine(curPos_.x());
+    curPos_.setX(0);
+    curPos_.setY(curPos_.y() + 1);
+    textLines_->insert(getCurPosY(), line);
+    return QPoint((*textLines_)[curPos_.y()].getSymbShift(getCurPosX()),
+            (*textLines_).getLineShift(getCurPosY(), getCurPosX()));
 }
 
 void TextField::_fill_highlightning_rect(QPainter &painter, const QPoint &begin, const QPoint &end)
 {
-    int  beginPos = selectionPos_.x() < curPos_.x() ?
-                selectionPos_.x() :
-                curPos_.x();
-    int endPos = selectionPos_.x() > curPos_.x() ?
-                selectionPos_.x() :
-                curPos_.x();
+    int  beginPos = selectionPos_.y() < curPos_.y() ?
+                selectionPos_.y() :
+                curPos_.y();
+    int endPos = selectionPos_.y() > curPos_.y() ?
+                selectionPos_.y() :
+                curPos_.y();
 
     if(beginPos < endPos){
-        int xBegin = begin.x();
-        int yBegin = begin.y();
-        int xEnd = (*textLines_)[beginPos].getWidth() + edge_.x();
-        int yEnd = begin.y() + (*textLines_)[beginPos].getHeight();
-        painter.fillRect(QRect(begin, QPoint(xEnd + 5, yEnd)),
+        int xBegin = begin.x() + edge_.x();
+        int yBegin = begin.y() + edge_.y();
+        int xEnd = (*textLines_)[beginPos].getWidth() + edge_.x() + 5;
+        int yEnd = begin.y() + (*textLines_)[beginPos].height() + edge_.y();
+        painter.fillRect(QRect(QPoint(xBegin, yBegin), QPoint(xEnd, yEnd)),
                          highlightningColor_);
 
         xBegin = edge_.x();
-        int xPos = beginPos + 1;
-        for(; xPos < endPos; ++xPos)
+        int yPos = beginPos + 1;
+        for(; yPos < endPos; ++yPos)
         {
             yBegin = yEnd;
-            yEnd += (*textLines_)[xPos].getMaxHeight();
-            if((*textLines_)[xPos].isEmpty())
+            yEnd += (*textLines_)[yPos].height();
+            if((*textLines_)[yPos].isEmpty())
             {
-
-                painter.fillRect(QRect(QPoint(xBegin, yBegin),
-                                       QPoint(10, yEnd)),
+                painter.fillRect(QRect(QPoint(xBegin, yBegin), QPoint(10, yEnd)),
                                  highlightningColor_);
                 continue;
             }
-            xEnd = (*textLines_)[xPos].getWidth() + edge_.x();
+            xEnd = (*textLines_)[yPos].getWidth() + edge_.x() + 5;
 
             painter.fillRect(QRect(QPoint(xBegin, yBegin),
-                                   QPoint(xEnd + 5, yEnd)),
+                                   QPoint(xEnd, yEnd)),
                              highlightningColor_);
         }
 
         yBegin = yEnd;
-        xEnd = end.x();
-        yEnd += (*textLines_)[xPos].getMaxHeight();
+        xEnd = end.x() + edge_.x();
+        yEnd += (*textLines_)[yPos].height();
         painter.fillRect(QRect(QPoint(xBegin, yBegin),
                            QPoint(xEnd, yEnd)),
                            highlightningColor_);
     }
     else{
-        painter.fillRect(QRect(QPoint(begin.x(), begin.y()),
-                                QPoint(end.x(), end.y() + (*textLines_)[beginPos].getMaxHeight())),
+        painter.fillRect(QRect(QPoint(begin.x() + edge_.x(), begin.y() + edge_.y()),
+                               QPoint(end.x() + edge_.x(), end.y() + edge_.y() + (*textLines_)[beginPos].height())),
                          highlightningColor_);
     }
 }
@@ -375,8 +373,8 @@ void TextField::_set_selection_pos(QPoint p)
 
 void TextField::_erase_highlighted_text()
 {
-    textLines_->deleteText(minPos(curPos_, selectionPos_),
-                          maxPos(curPos_, selectionPos_));
+    textLines_->deleteText(minPoint(curPos_, selectionPos_),
+                          maxPoint(curPos_, selectionPos_));
     _reset_selection();
     setSelected(false);
 }
@@ -399,28 +397,33 @@ const QPoint& TextField::maxPoint(const QPoint &p1, const QPoint &p2) const
      return p1.x() >= p2.x() ? p1 : p2;
 }
 
-const QPoint& TextField::minPos(const QPoint &p1, const QPoint &p2) const
-{
-    if(p1.x() < p2.x() )
-        return p1;
-    else if(p2.x() < p1.x())
-        return p2;
-     return p1.y() <= p2.y() ? p1 : p2;
-}
-
-const QPoint& TextField::maxPos(const QPoint &p1, const QPoint &p2) const
-{
-    if(p1.x() > p2.x() )
-        return p1;
-    else if(p2.x() > p1.x())
-        return p2;
-     return p1.y() >= p2.y() ? p1 : p2;
-}
-
 void TextField::_reset_selection()
 {
-    curPos_ = minPos(curPos_, selectionPos_);
-    selectionPos_ = minPos(curPos_, selectionPos_);
+    setCurrentPos(minPoint(curPos_, selectionPos_));
+    selectionPos_ = curPos_;
     selectionBegin_ = minPoint(selectionBegin_, selectionEnd_);
-    selectionEnd_ = minPoint(selectionBegin_, selectionEnd_);
+    selectionEnd_ = selectionBegin_;
+}
+
+void TextField::_set_cursor_points(QPoint p)
+{
+    _change_cursor(p);
+
+    QPoint p_roof = QPoint(p.x(), (*textLines_).getLineRoof(getCurPosY()));
+    _set_selection_pos(curPos_);
+    _set_selection_begin(p_roof);
+    _set_selection_end(p_roof);
+    if(!(*textLines_)[getCurPosY()].isEmpty()){
+        setFont(QFont((*textLines_)[getCurPosY()][curPos_.x() ? curPos_.x() - 1 : 0].font()));
+        emit fontChanged(font());
+    }
+}
+
+void TextField::_change_cursor(QPoint p)
+{
+    int y = getCurPosY();
+    int x = getCurPosX();
+    cursor_->setCursor(p, (*textLines_)[y].isEmpty() ?
+                           (*textLines_)[y].height() :
+                           (*textLines_)[y][x].height());
 }

@@ -24,7 +24,7 @@ public:
     Symbol();
     Symbol(QChar value);
     explicit Symbol(QFont font);
-    explicit Symbol(QFont font, QChar value);
+    explicit Symbol(const QFont& font, QChar value);
     Symbol(const Symbol&);
     Symbol& operator=(const Symbol&);
     ~Symbol();
@@ -32,11 +32,11 @@ public:
     inline bool bold() const { return font_.bold(); }
     inline void setBold(bool bold) { font_.setBold(bold); }
 
-    inline QFont font() const { return font_; }
-    inline void setFont(QFont font) {
-        font_ = font;
+    inline const QFont& font() const { return font_; }
+    inline void setFont(const QFont& font) {
+        font_ = QFont(font);
         delete fontMetrics_;
-        fontMetrics_ = new QFontMetrics(font);
+        fontMetrics_ = new QFontMetrics(font_);
     }
 
     inline bool italic() const { return font_.italic(); }
@@ -66,10 +66,13 @@ public:
     Line& operator=(const Line&);
     ~Line();
 
-    inline int getHeight() const { return height_; }
+    inline int height() const { return height_; }
     qint64 getMaxHeight() const;
+    void setHeight(qint64 height) {
+        if(height > height_)
+            height_ = height;
+    }
     inline int getWidth() const { return width_; }
-    qint64 getWidth(int pos) const;
     inline int length() const { return content_.length(); }
     inline int size() const { return content_.size(); }
 
@@ -83,12 +86,14 @@ public:
     Symbol erase(int pos);
 
     int getSymbolIndex(int pos, int edgeX) const;
-    int getSymbolBegin(int x, int edgeX, int ind = 0) const;
-
+    qint64 getSymbShift(int s) const;
+    int getSymbolBegin(int x, QPoint &pos) const;
+    inline int getDifference(int s) const;
     // Divides text into two parts after pos and creates new Line;
     Line getNewLine(int pos);
 
     Symbol& operator[](int);
+    const Symbol& at(int) const;
 
 signals:
     void heightChanged();
@@ -102,6 +107,7 @@ private:
 
     qint64 width_;
     qint64 height_;
+    qint64 maxHeight_;
 };
 
 
@@ -129,6 +135,8 @@ public:
     }
 
     int getLineIndex(int pos, int edgeY) const;
+    int getLineShift(int l, int s) const;
+    int getLineRoof(int l) const;
 
     Line erase(int pos);
     void insert(int pos, const Line &);
@@ -139,23 +147,24 @@ public:
     void push_back( const Line &);
 
     Symbol getSymbol(int i, int j);
-    void eraseSymbol(int x, int y);
+    void eraseSymbol(int x, int y, QPoint &pos);
     void deleteText(const QPoint& begin,const QPoint& end);
 
-    QPoint getShiftByCoord(QPoint p, QPoint edge, int indX = 0, int indY = 0) const;
-    Symbol *getSymbByCoord(QPoint point, QPoint edge);
+    QPoint getShiftByCoord(QPoint p, QPoint &pos) const;
+    QPoint getShiftByPos(int x, int y, QPoint &pos) const;
     void draw(QPainter *painter, QPoint edge);
 
     void copyPart(Text* res, QPoint beginPos, QPoint endPos);
     void cutPart(Text* res, QPoint beginPos, QPoint endPos);
-    void insertPart(Text* source, QPoint pos);
+    void insertPart(Text* source, QPoint &pos);
+
+    void reduce_height(int);
 
 signals:
     void heightChanged();
 
 private:
     void raise_height(int);
-    void reduce_height(int);
 
     LineList content_;
     qint64 height_;
