@@ -46,8 +46,8 @@ public slots:
     void pasteText();
     void deleteText();
 
-    void changeFontType();
-    void changeFontSize();
+    void changeCurrentFont(QAction*);
+    void changeFontSize(QAction*);
     void setBoldText();
     void setItalicText();
 

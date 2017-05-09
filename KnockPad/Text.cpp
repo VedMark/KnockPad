@@ -115,6 +115,29 @@ qint64 Line::getMaxHeight() const
     return max;
 }
 
+void Line::setHeight(qint64 height) {
+    if(height > height_)
+        height_ = height;
+}
+
+void Line::recountHeight() {
+    int h = 0;
+    foreach (Symbol s, content_) {
+        if(s.height() > h)
+        h = s.height();
+    }
+    height_ = h;
+}
+
+void Line::recountWidth() {
+    int w = 0;
+    foreach (Symbol s, content_) {
+        w += s.width();
+    }
+    width_ = w;
+}
+
+
 Symbol Line::pop_front()
 {
     Symbol symb = content_.first();
@@ -164,17 +187,6 @@ Symbol Line::erase(int pos)
     content_.erase(content_.begin() + pos);
     reduce_height(h);
     return symb;
-}
-
-int Line::getSymbolIndex(int pos, int edgeX) const
-{
-    qint64 shift = edgeX;
-    int i = 0;
-    while(shift < pos && shift < width_)
-    {
-        shift += content_[i++].width();
-    }
-    return i;
 }
 
 int Line::getSymbolBegin(int x, QPoint& pos) const
@@ -258,7 +270,6 @@ Text::Text(QObject *parent)
     : QObject(parent)
 {
     height_ = 0;
-    curFieldFont_ = NULL;
 }
 
 Text::Text(int h, QObject *parent)
@@ -267,7 +278,6 @@ Text::Text(int h, QObject *parent)
     Line line = Line(h, this);
     height_ = 0;
     insert(0, line);
-    curFieldFont_ = NULL;
 }
 
 Text::Text(const Text& text) :
@@ -276,7 +286,6 @@ Text::Text(const Text& text) :
     setParent(text.parent());
     content_ = text.content_;
     height_ = text.height_;
-    curFieldFont_ = text.curFieldFont_;
 }
 
 Text::~Text()
@@ -288,13 +297,21 @@ Text& Text::operator=(const Text& text)
     setParent(text.parent());
     content_ = text.content_;
     height_ = text.height_;
-    curFieldFont_ = text.curFieldFont_;
     return *this;
 }
 
 Line& Text::operator[](int pos)
 {
     return content_[pos];
+}
+
+
+void Text::recountHeight() {
+    int h = 0;
+    foreach (Line l, content_) {
+        h += l.height();
+    }
+    height_ = h;
 }
 
 Line Text::erase(int pos)
@@ -308,12 +325,12 @@ Line Text::erase(int pos)
 void Text::insert(int pos, const Line& line)
 {
     content_.insert(content_.begin() + pos, line);
-    raise_height(line.getMaxHeight());
+    raise_height(line.height());
 }
 
 void Text::insert(int posX, int posY, const Symbol &symb)
 {
-    int h = symb.height() - content_[posY].getMaxHeight();
+    int h = symb.height() - content_[posY].height();
     content_[posY].insert(posX, symb);
     if(h > 0)
         raise_height(h);
@@ -379,15 +396,6 @@ void Text::eraseSymbol(int l, int s, QPoint& pos)
     }
 }
 
-qint64 Text::getHeight(int index) const
-{
-    qint64 y = 0;
-    LineList::const_iterator it = content_.begin();
-    for(; it != content_.begin() + index; ++ it)
-        y += it->height();
-    return y;
-}
-
 void Text::deleteText(const QPoint &begin, const QPoint &end)
 {
     if(begin.y() < end.y())
@@ -411,19 +419,6 @@ void Text::deleteText(const QPoint &begin, const QPoint &end)
     }
 }
 
-int Text::getLineIndex(int pos, int edgeY) const
-{
-    int shift = edgeY;
-    int i = 0;
-
-    while(shift < pos && shift < height_)
-    {
-        shift += content_[i++].height();
-    }
-    if(shift > pos) --i;
-    return i;
-}
-
 int Text::getLineShift(int l , int s) const
 {
     int Y = getLineRoof(l);
@@ -442,8 +437,9 @@ int Text::getLineRoof(int l) const
         l = content_.size() - 1;
     if(l >= 0)
     {
-        for(int i = 0; i < l; ++i)
-            Y += content_[i].height();
+        LineList::const_iterator it = content_.begin();
+        for(; it != content_.begin() + l; ++ it)
+            Y += it->height();
     }
     return Y;
 }
@@ -616,10 +612,14 @@ void Text::insertPart(Text* source, QPoint& pos)
     for(int j = 1; j < source->length(); ++j)
         insert(pos.y() + j, Line((*source)[j]));
 
-    pos.setX((*source)[source->length() - 1].length());
     for(int j = 0; j < line.length(); ++j)
         content_[pos.y() + source->length() - 1].push_back(Symbol(line[j]));
     pos.setY(pos.y() + source->length() - 1);
+
+    if(source->length() > 1)
+        pos.setX((*source)[source->length() - 1].length());
+    else
+        pos.setX(pos.x() + (*source)[0].length());
 }
 
 void Text::raise_height(int h)

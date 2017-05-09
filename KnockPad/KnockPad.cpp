@@ -1,6 +1,7 @@
 #include "KnockPad.h"
 
-KnockPad::KnockPad() : QMainWindow()
+KnockPad::KnockPad() :
+    QMainWindow()
 {
     menuComponents = new MenuComponents;
 
@@ -32,20 +33,23 @@ KnockPad::KnockPad() : QMainWindow()
     connect(menuComponents->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
     connect(menuComponents->pasteAction, SIGNAL( triggered() ), SLOT( pasteText() ) );
     connect(menuComponents->deleteAction, SIGNAL( triggered() ), SLOT( deleteText() ) );
-    connect(menuComponents->fontTypeAction, SIGNAL( triggered() ), SLOT( changeFontType() ) );
-    connect(menuComponents->fontSizeAction, SIGNAL( triggered() ), SLOT( changeFontSize() ) );
+    connect(menuComponents->fontTypeMenu, SIGNAL( triggered(QAction*) ), SLOT( changeCurrentFont(QAction*) ) );
+    connect(menuComponents->fontSizeMenu, SIGNAL( triggered(QAction*) ), SLOT( changeFontSize(QAction*) ) );
+
+    connect(textField, SIGNAL( posChanged(QPoint) ), statusBar, SLOT(updateStatusBar(QPoint)) );
+
+    connect(editToolBar->getFontBox(), SIGNAL( activated(QString) ), textField, SLOT( changeCurrentFont(QString) ) );
+    connect(editToolBar->getSizeBox(), SIGNAL(activated(QString)), textField, SLOT( changeCurrentFontSize(QString) ) );
     connect(menuComponents->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
     connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
-    connect(textField, SIGNAL( posChanged(QPoint) ), statusBar, SLOT(updateStatusBar(QPoint)) );
-    connect(editToolBar->getFontBox(), SIGNAL( activated(QString) ), textField, SLOT( changeCurrentFont(QString) ) );
-    connect(editToolBar->getSizeBox(), SIGNAL(activated(QString)), textField, SLOT( changeCurrentFontSize(QString) ) );
     connect(textField, SIGNAL( fontChanged(const QFont&)), editToolBar, SLOT( changeToolBarFonts(const QFont&) ));
 
-    this->setWindowTitle(tr("KnockPad"));
+    setWindowTitle(tr("KnockPad"));
 
-    this->resize(1366, 768);
-    this->show();
+    resize(1368, 768);
+
+    show();
 }
 
 KnockPad::~KnockPad()
@@ -74,7 +78,7 @@ void KnockPad::resizeEvent(QResizeEvent *)
 
 bool KnockPad::agreedToContinue()
  {
-     if (!this->textEdit.document()->isModified())
+     if (!textEdit.document()->isModified())
          return true;
      QMessageBox::StandardButton answer = QMessageBox::warning(this,
                        tr("The document has been modified"),
@@ -188,36 +192,40 @@ void KnockPad::deleteText()
      textField->clear();
 }
 
-void KnockPad::changeFontType()
+void KnockPad::changeFontSize(QAction* action)
 {
-    qDebug() << "changeFontType";
+    textField->changeCurrentFontSize(action->text());
 }
 
-void KnockPad::changeFontSize()
+void KnockPad::changeCurrentFont(QAction* action)
 {
-    qDebug() << "changeFontSize";
+    textField->changeCurrentFont(action->text());
 }
 
 void KnockPad::setBoldText()
 {
-    qDebug() << "setBoldText";
+    bool checked = menuComponents->fontBoldAction->isChecked() ? true : false;
+    menuComponents->fontBoldAction->setChecked(checked);
+    textField->changeBold(checked);
 }
 
 void KnockPad::setItalicText()
 {
-    qDebug() << "setItalicText";
+    bool checked = menuComponents->fontItalicAction->isChecked() ? true : false;
+    menuComponents->fontItalicAction->setChecked(checked);
+    textField->changeItalics(checked);
 }
 
 void KnockPad::setCurrentFileName(const QString &fileName)
 {
-    this->currentFileName = fileName;
-    //this->textEdit.setModified(false);
+    currentFileName = fileName;
+    //textEdit.setModified(false);
 
     QString shownName;
-    if(this->currentFileName.isEmpty())
+    if(currentFileName.isEmpty())
         shownName = tr("untitled.txt");
     else
-        shownName = QFileInfo(this->currentFileName).fileName();
+        shownName = QFileInfo(currentFileName).fileName();
 
     //setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Rich Text")));
     //setWindowModified();

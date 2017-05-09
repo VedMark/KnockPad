@@ -17,29 +17,29 @@ EditToolBar::~EditToolBar()
     delete sizeBox;
 }
 
-
 void EditToolBar::changeToolBarFonts(const QFont& f)
 {
     sizeBox->setCurrentText(QString::number(f.pointSize()));
     fontBox->setCurrentText(f.family());
+    components->fontBoldAction->setChecked(f.bold());
+    components->fontItalicAction->setChecked(f.italic());
 }
-
 
 void EditToolBar::createToolBar()
 {
     components->addFileActions(this);
-    this->addSeparator();
+    addSeparator();
     components->addEditActions(this);
-    this->addSeparator();
+    addSeparator();
 
     fontBox->addItems(components->getFontList());
-    this->addWidget(fontBox);
-    fontBox->setCurrentIndex(3);
+    addWidget(fontBox);
+    fontBox->setCurrentText("Monospace");
 
     sizeBox->addItems(components->getFontSizeList());
     addWidget(sizeBox);
     sizeBox->setEditable(true);
-    sizeBox->setCurrentIndex(3);
+    sizeBox->setCurrentText("14");
 
     addAction(components->fontBoldAction);
     addAction(components->fontItalicAction);

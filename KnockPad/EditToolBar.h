@@ -1,6 +1,7 @@
 #ifndef EDITTOOLBAR_H
 #define EDITTOOLBAR_H
 
+#include <QPushButton>
 #include <QComboBox>
 #include <QToolBar>
 #include <QSizePolicy>
@@ -16,7 +17,7 @@ public:
 
     const QComboBox* getFontBox() const { return fontBox; }
     const QComboBox* getSizeBox() const { return sizeBox; }
-    const int getFontSize() const { return sizeBox->currentText().toInt(); }
+    int getFontSize() const { return sizeBox->currentText().toInt(); }
     const QString getFontType() const { return fontBox->currentText(); }
 
     ~EditToolBar();

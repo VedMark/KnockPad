@@ -5,6 +5,7 @@
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPalette>
+#include <QScrollBar>
 #include <QString>
 #include <QTimer>
 #include <QWidget>
@@ -19,6 +20,8 @@ class TextField : public QAbstractScrollArea
     Q_OBJECT
 
 public:
+    friend class Text;
+
     explicit TextField(QString fontName, int fontSize, QWidget *parent = Q_NULLPTR);
     ~TextField();
 
@@ -47,8 +50,8 @@ public:
 public slots:
     void changeCurrentFontSize(const QString &font);
     void changeCurrentFont(const QString &font);
-    void changeToItalics();
-    void changeToBold();
+    void changeItalics(bool it);
+    void changeBold(bool bold);
 
 signals:
     void posChanged(QPoint);
@@ -61,6 +64,24 @@ protected:
     void paintEvent(QPaintEvent *);
 
 private:
+
+    template <class T>
+    using textFunc = void (Text::*) (Text::qFontF<T> f, QPoint, QPoint, T);
+
+    template <class Argument>
+    void apply_font_func(Text::qFontF<Argument> ff, Argument arg)
+    {
+        if(selectionBegin_ != selectionEnd_){
+            QPoint min_point = minPoint(curPos_, selectionPos_);
+            QPoint max_point = maxPoint(curPos_, selectionPos_);
+            textLines_->fontF<Argument>(ff, min_point, max_point, arg);
+            _set_selection_begin((*textLines_).getShiftByPos(min_point.x(), min_point.y(), curPos_));
+            _set_selection_end((*textLines_).getShiftByPos(max_point.x(), max_point.y(), curPos_));
+            _change_cursor(selectionEnd_);
+        }
+    }
+
+
     inline QPoint _get_end_document();
     inline void _change_positions(QPoint p);
 

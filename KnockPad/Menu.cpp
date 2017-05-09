@@ -22,12 +22,12 @@ void Menu::createMenu()
     components->addRecentFilesActions(fileMenu);
     fileMenu->addSeparator();
     components->addExitAction(fileMenu);
-    this->addMenu(fileMenu);
+    addMenu(fileMenu);
 
     components->addEditActions(editMenu);
     editMenu->addSeparator();
     components->addDropDawnFontActions(editMenu);
-    this->addMenu(editMenu);
+    addMenu(editMenu);
 }
 
 void Menu::createContextMenu()

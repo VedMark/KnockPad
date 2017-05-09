@@ -5,6 +5,7 @@
 #include <QtCore>
 #include <QComboBox>
 #include <QFileDialog>
+#include <QFontDatabase>
 #include <QMenu>
 #include <QDialog>
 
@@ -37,10 +38,11 @@ public:
     QAction *pasteAction;
     QAction *deleteAction;
 
-    QAction *fontTypeAction;
-    QAction *fontSizeAction;
     QAction *fontBoldAction;
     QAction *fontItalicAction;
+
+    QMenu *fontTypeMenu;
+    QMenu *fontSizeMenu;
 
     inline const QStringList& getFontList() const { return fonts; }
     inline const QStringList& getFontSizeList() const { return fontSizes; }
@@ -52,9 +54,6 @@ private:
     void createFileActions();
     void createEditActions();
     void createFontActions();
-
-    QMenu *fontTypeMenu;
-    QMenu *fontSizeMenu;
 
     QStringList fonts;
     QStringList fontSizes;

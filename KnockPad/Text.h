@@ -68,13 +68,13 @@ public:
 
     inline int height() const { return height_; }
     qint64 getMaxHeight() const;
-    void setHeight(qint64 height) {
-        if(height > height_)
-            height_ = height;
-    }
+    inline void setHeight(qint64 height);
+    void recountHeight();
+
     inline int getWidth() const { return width_; }
     inline int length() const { return content_.length(); }
     inline int size() const { return content_.size(); }
+    void recountWidth();
 
     inline bool isEmpty() const { return !content_.size(); }
 
@@ -85,19 +85,13 @@ public:
     void insert(int pos, const Symbol&);
     Symbol erase(int pos);
 
-    int getSymbolIndex(int pos, int edgeX) const;
     qint64 getSymbShift(int s) const;
     int getSymbolBegin(int x, QPoint &pos) const;
     inline int getDifference(int s) const;
-    // Divides text into two parts after pos and creates new Line;
     Line getNewLine(int pos);
 
     Symbol& operator[](int);
     const Symbol& at(int) const;
-
-signals:
-    void heightChanged();
-    void widthChanged();
 
 private:
     void raise_height(int);
@@ -124,17 +118,10 @@ public:
     Text& operator=(const Text&);
     Line& operator[](int);
 
-    inline qint64 getHeight() const { return height_; }
-    qint64 getHeight(int index) const;
-
+    inline qint64 height() const { return height_; }
+    void recountHeight();
     inline int length() const { return content_.length(); }
 
-    inline QFont* getCurrentFont() const { return curFieldFont_; }
-    inline void setCurrentFont(const QFont* font){
-        curFieldFont_ = const_cast<QFont*>(font);
-    }
-
-    int getLineIndex(int pos, int edgeY) const;
     int getLineShift(int l, int s) const;
     int getLineRoof(int l) const;
 
@@ -158,18 +145,58 @@ public:
     void cutPart(Text* res, QPoint beginPos, QPoint endPos);
     void insertPart(Text* source, QPoint &pos);
 
-    void reduce_height(int);
+    template <class T>
+    using qFontF = void (QFont::*) (T);
 
-signals:
-    void heightChanged();
+    template <class Argument>
+    void fontF(qFontF<Argument> func, QPoint begin, QPoint end, Argument arg)
+    {
+        if(begin.y() < end.y())
+        {
+            for(int j = begin.x(); j < content_[begin.y()].size(); ++j)
+            {
+                QFont f = content_[begin.y()][j].font();
+                (f.*func)(arg);
+                content_[begin.y()][j].setFont(f);
+            }
+
+            for(int i = begin.y() + 1; i < end.y() - 1; ++i)
+                for(int j = begin.x(); j < end.x(); ++j)
+                {
+                    QFont f = content_[i][j].font();
+                    (f.*func)(arg);
+                    content_[i][j].setFont(f);
+                }
+            for(int j = 0; j < end.x(); ++j)
+            {
+                QFont f = content_[end.y()][j].font();
+                (f.*func)(arg);
+                content_[end.y()][j].setFont(f);
+            }
+            for(int i = begin.y(); i <= end.y(); ++i){
+                content_[i].recountHeight();
+                content_[i].recountWidth();
+            }
+        }
+        else{
+            for(int j = begin.x(); j < end.x(); ++j)
+            {
+                QFont f = content_[begin.y()][j].font();
+                (f.*func)(arg);
+                content_[begin.y()][j].setFont(f);
+            }
+            content_[begin.y()].recountHeight();
+            content_[begin.y()].recountWidth();
+        }
+        recountHeight();
+    }
 
 private:
     void raise_height(int);
+    void reduce_height(int);
 
     LineList content_;
     qint64 height_;
-
-    QFont* curFieldFont_;
 };
 
 #endif
