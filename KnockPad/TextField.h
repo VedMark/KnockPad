@@ -1,16 +1,15 @@
 #ifndef TEXTFIELD_H
 #define TEXTFIELD_H
 
+#include <QAbstractScrollArea>
+#include <QScrollBar>
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
 #include <QPalette>
-#include <QScrollBar>
 #include <QString>
 #include <QTimer>
-#include <QWidget>
 
-#include "Recorder.h"
 #include "Text.h"
 #include "Cursor.h"
 
@@ -22,15 +21,16 @@ class TextField : public QAbstractScrollArea
 public:
     friend class Text;
 
-    explicit TextField(QString fontName, int fontSize, QWidget *parent = Q_NULLPTR);
+    explicit TextField(QFont font, QWidget *parent = Q_NULLPTR);
     ~TextField();
 
     void setTextEditorView(Qt::GlobalColor color);
     void clear();
 
     QPoint getShiftByCoord(QPoint point);
-    bool readFile(const QString &fileName);
-    bool writeFile(const QString &fileName);
+
+    inline const Text* getText() const { return textLines_; }
+    void setText(const Text* text);
 
     inline bool capsLock() const { return capsPressed_; }
     inline void setCapsLock(const bool caps) { capsPressed_ = caps; }
@@ -40,7 +40,7 @@ public:
 
     inline int getCurPosX() const;
     inline int getCurPosY() const;
-    inline void setCurrentPos(const QPoint& curPos);
+    void setCurrentPos(const QPoint& curPos);
 
     void copy();
     void cut();
@@ -52,6 +52,8 @@ public slots:
     void changeCurrentFont(const QString &font);
     void changeItalics(bool it);
     void changeBold(bool bold);
+    void moveHViewPort(int value);
+    void moveVViewPort(int value);
 
 signals:
     void posChanged(QPoint);
@@ -62,6 +64,7 @@ protected:
     void mousePressEvent(QMouseEvent *);
     void mouseMoveEvent(QMouseEvent *);
     void paintEvent(QPaintEvent *);
+    void resizeEvent(QResizeEvent *);
 
 private:
 
@@ -82,6 +85,7 @@ private:
     }
 
 
+    void resize_field(qint64 h);
     inline QPoint _get_end_document();
     inline void _change_positions(QPoint p);
 
@@ -118,6 +122,7 @@ private:
     bool selected_;
 
     int currentFontSize;
+    qint64 width;
 };
 
 #endif

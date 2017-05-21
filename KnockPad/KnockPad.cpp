@@ -14,20 +14,20 @@ KnockPad::KnockPad() :
     statusBar = new StatusBar(this);
     setStatusBar(statusBar);
 
-    textField = new TextField(editToolBar->getFontType(), editToolBar->getFontSize(), this);
+    defaultFont = QFont(editToolBar->getFontType(), editToolBar->getFontSize());
+
+    textField = new TextField(defaultFont, this);
     textField->setFocus();
     setCentralWidget(textField);
     textField->setTextEditorView(Qt::white);
 
     //setWindowIcon(QIcon(":/images/icon.png"));
-    //setCurrentFileName("");
+    setCurrentFileName("");
 
     connect(menuComponents->newAction, SIGNAL( triggered() ), SLOT( newFile() ) );
     connect(menuComponents->openAction, SIGNAL( triggered() ), SLOT( open() ) );
     connect(menuComponents->saveAction, SIGNAL( triggered() ), SLOT( save() ) );
     connect(menuComponents->saveAsAction, SIGNAL( triggered() ), SLOT( saveAs() ) );
-    for(int i = 0; i < MenuComponents::MAX_RECENT_FILES; ++i)
-        connect(menuComponents->recentFileActions[i], SIGNAL( triggered() ), SLOT( openRecentFile() ) );
     connect(menuComponents->exitAction, SIGNAL( triggered() ), SLOT( closeApp() ) );
     connect(menuComponents->cutAction, SIGNAL( triggered() ), SLOT( cutText() ) );
     connect(menuComponents->copyAction, SIGNAL( triggered() ), SLOT( copyText() ) );
@@ -47,7 +47,12 @@ KnockPad::KnockPad() :
 
     setWindowTitle(tr("KnockPad"));
 
-    resize(1368, 768);
+    textField->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+    textField->resize(sizeHint());
+    setMinimumSize(400, 200);
+    setMaximumSize(1368, 768);
+    resize(700, 600);
+
 
     show();
 }
@@ -64,16 +69,10 @@ void KnockPad::contextMenuEvent(QContextMenuEvent* mouse_pointer)
 void KnockPad::closeEvent(QCloseEvent * closeEvent)
 {
     if(agreedToContinue()){
-        //writeSettings();
         closeEvent->accept();
     }
     else
         closeEvent->ignore();
-}
-
-void KnockPad::resizeEvent(QResizeEvent *)
-{
-
 }
 
 bool KnockPad::agreedToContinue()
@@ -104,8 +103,8 @@ void KnockPad::open()
 {
     if(agreedToContinue()){
         QString openFileName = QFileDialog::getOpenFileName(this,
-                                                tr("Open file"), ".",
-                                                tr("*.*"));
+                                                tr("Open file"), "/media/bsuir",
+                                                tr("Text files (*.txt);;KnockPad files (*.kp)"));
         if(!openFileName.isEmpty())
             loadFile(openFileName);
 
@@ -123,53 +122,52 @@ bool KnockPad::save()
 bool KnockPad::saveAs()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                                tr("Save file"), ".",
-                                                tr("*.*"));
-    if(!fileName.isEmpty())
+                                                tr("Save file"), "/media/bsuir",
+                                                tr("Text files (*.txt);;KnockPad files (*.kp)"));
+    if(fileName.isEmpty())
         return false;
+    if(!fileName.endsWith(".txt") && !fileName.endsWith(".kp"))
+        fileName += ".kp";
     return saveFile(fileName);
 }
 
 bool KnockPad::loadFile(const QString &fileName)
 {
-    if(!textField->readFile(fileName)){
+    try{
+        textField->setText(fileRecorder.read(fileName, defaultFont));
+
+        textField->setCurrentPos(QPoint(0, 0));
+        setCurrentFileName(fileName);
+        statusBar->showMessage(tr("File loaded"), 2000);
+    }
+    catch(FileOpenException &)
+    {
         statusBar->showMessage(tr("Loadind canceled"), 2000);
         return false;
     }
-    setCurrentFileName(fileName);
-    statusBar->showMessage(tr("File loaded"), 2000);
+
     return true;
 }
 
 bool KnockPad::saveFile(const QString &fileName)
 {
-    if(!textField->writeFile(fileName)){
-        statusBar->showMessage(tr("Saving canceled"));
+    try{
+        fileRecorder.write(textField->getText(), fileName);
+        setCurrentFileName(fileName);
+        statusBar->showMessage(tr("File saved"), 2000);
+    }
+    catch(FileOpenException &)
+    {
+        statusBar->showMessage(tr("Saving canceled"), 2000);
         return false;
     }
-    setCurrentFileName(fileName);
-    statusBar->showMessage(tr("File saved"), 2000);
+
     return true;
 }
 
 void KnockPad::closeApp()
 {
     close();
-}
-
-void KnockPad::saveInCurrentFile()
-{
-    QString str = QFileDialog::getSaveFileName(0, tr("Save File"));
-    if(!currentFileName.isEmpty())
-    {
-    }
-}
-
-void KnockPad::openRecentFile()
-{
-//    if(agreedToContinue())
-//        loadFile(recentFileNames[menuComponents->MAX_RECENT_FILES - 1]);
-
 }
 
 void KnockPad::cutText()

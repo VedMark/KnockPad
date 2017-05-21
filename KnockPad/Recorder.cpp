@@ -1,279 +1,158 @@
 #include "Recorder.h"
-#include <limits.h>
 
 Recorder::Recorder(QObject *parent):
     QObject(parent)
 {
-    QBuffer *buf = new QBuffer(this);
-    setIODevice(*buf);
 }
 
-Recorder::Recorder(QIODevice &ioDevice, QObject *parent):
-    QObject(parent)
+Text* Recorder::read(QString file, QFont defFont)
 {
-    setIODevice(ioDevice);
-}
+    QFile inFile(file);
 
-bool Recorder::setIODevice(QIODevice &ioDevice)
-{
-    _ioDevice = &ioDevice;
-    bool ok = _ioDevice->open(QIODevice::ReadOnly);
-    if (ok)
+    if(!inFile.open(QIODevice::ReadOnly))
+        throw FileOpenException();
+
+    Text *text = new Text();
+
+    if(file.endsWith(".kp"))
     {
-        _size = _ioDevice->size();
-        _ioDevice->close();
+        reader.setDevice(&inFile);
+        reader.readNext();
+        reader.readNext();
+        reader.readNext();
+        do{
+            Line line = Line(reader.attributes()[0].value().toInt(), text);
+            reader.readNext();
+
+            do{
+                QXmlStreamAttributes attrs = reader.attributes();
+                reader.readNext();
+                if(reader.isEndElement() && reader.name().toString() == "font"){
+                    reader.readNext();
+                    break;
+                }
+                QString str = reader.text().toString();
+                add_similar_font_text(attrs, str, line);
+
+                reader.readNext();
+                reader.readNext();
+                if(reader.isEndElement() && reader.name().toString() == "line")
+                    break;
+            } while(true);
+
+            text->push_back(line);
+
+            reader.readNext();
+        } while(!(reader.isEndElement() && reader.name().toString() == "KnockPadText"));
     }
-    else
+    else if(file.endsWith(".txt"))
     {
-        QBuffer *buf = new QBuffer(this);
-        _ioDevice = buf;
-        _size = 0;
-    }
-    _records.clear();
-    _pos = 0;
-    return ok;
-}
-
-QByteArray Recorder::getData(qint64 pos, qint64 maxSize, QByteArray *highlighted)
-{
-    qint64 ioDelta = 0;
-    int recordIdx = 0;
-
-    Record record;
-    QByteArray buffer;
-
-    if (highlighted)
-        highlighted->clear();
-
-    if (pos >= _size)
-        return buffer;
-
-    if (maxSize < 0)
-        maxSize = _size;
-    else
-        if ((pos + maxSize) > _size)
-            maxSize = _size - pos;
-
-    _ioDevice->open(QIODevice::ReadOnly);
-
-    while (maxSize > 0)
-    {
-        record.absPos = LLONG_MAX;
-        bool RecorderLoopOngoing = true;
-        while ((recordIdx < _records.count()) && RecorderLoopOngoing)
+        int height = QFontMetrics(defFont).height();
+        bool endsWithEmpty = true;
+        while(!inFile.atEnd())
         {
-            record = _records[recordIdx];
-            if (record.absPos > pos)
-                RecorderLoopOngoing = false;
-            else
-            {
-                recordIdx += 1;
-                qint64 count;
-                qint64 recordOfs = pos - record.absPos;
-                if (maxSize > ((qint64)record.data.size() - recordOfs))
-                {
-                    count = (qint64)record.data.size() - recordOfs;
-                    ioDelta += 0x1000 - record.data.size();
-                }
-                else
-                    count = maxSize;
-                if (count > 0)
-                {
-                    buffer += record.data.mid(recordOfs, (int)count);
-                    maxSize -= count;
-                    pos += count;
-                    if (highlighted)
-                        *highlighted += record.dataChanged.mid(recordOfs, (int)count);
-                }
+            Line line = Line(height, text);
+            QByteArray byteLine = inFile.readLine();
+            if(byteLine.endsWith('\n')){
+                byteLine.remove(byteLine.length() - 1, 1);
+                endsWithEmpty = true;
             }
+            else endsWithEmpty = false;
+            foreach (QChar s, byteLine) {
+                line.push_back(Symbol(defFont, s));
+            }
+            text->push_back(line);
         }
-
-        if ((maxSize > 0) && (pos < record.absPos))
-        {
-            qint64 byteCount;
-            QByteArray readBuffer;
-            if ((record.absPos - pos) > maxSize)
-                byteCount = maxSize;
-            else
-                byteCount = record.absPos - pos;
-
-            maxSize -= byteCount;
-            _ioDevice->seek(pos + ioDelta);
-            readBuffer = _ioDevice->read(byteCount);
-            buffer += readBuffer;
-            if (highlighted)
-                *highlighted += QByteArray(readBuffer.size(), 0);
-            pos += readBuffer.size();
-        }
+        if(endsWithEmpty)
+            text->push_back(Line(height, text));
     }
-    _ioDevice->close();
-    return buffer;
+    inFile.close();
+    return text;
 }
 
-bool Recorder::write(QIODevice &iODevice, qint64 pos, qint64 count)
+bool Recorder::write(const Text* text, QString file)
 {
-    if (count == -1)
-        count = _size;
-    bool ok = iODevice.open(QIODevice::WriteOnly);
-    if (ok)
-    {
-        for (qint64 idx=pos; idx < count; idx += 0x10000)
-        {
-            QByteArray ba = getData(idx, 0x10000);
-            iODevice.write(ba);
-        }
-        iODevice.close();
-    }
-    return ok;
-}
+    QFile outFile(file);
 
-void Recorder::setDataChanged(qint64 pos, bool dataChanged)
-{
-    if ((pos < 0) || (pos >= _size))
-        return;
-    int recordIdx = getRecordIndex(pos);
-    qint64 posInBa = pos - _records[recordIdx].absPos;
-    _records[recordIdx].dataChanged[(int)posInBa] = char(dataChanged);
-}
-
-bool Recorder::dataChanged(qint64 pos)
-{
-    QByteArray highlighted;
-    getData(pos, 1, &highlighted);
-    return bool(highlighted.at(0));
-}
-
-qint64 Recorder::indexOf(const QByteArray &ba, qint64 from)
-{
-    qint64 result = -1;
-    QByteArray buffer;
-
-    for (qint64 pos=from; (pos < _size) && (result < 0); pos += 0x10000)
-    {
-        buffer = getData(pos, 0x10000 + ba.size() - 1);
-        int findPos = buffer.indexOf(ba);
-        if (findPos >= 0)
-            result = pos + (qint64)findPos;
-    }
-    return result;
-}
-
-qint64 Recorder::lastIndexOf(const QByteArray &ba, qint64 from)
-{
-    qint64 result = -1;
-    QByteArray buffer;
-
-    for (qint64 pos=from; (pos > 0) && (result < 0); pos -= 0x10000)
-    {
-        qint64 sPos = pos - 0x10000 - (qint64)ba.size() + 1;
-        if (sPos < 0)
-            sPos = 0;
-        buffer = getData(sPos, pos - sPos);
-        int findPos = buffer.lastIndexOf(ba);
-        if (findPos >= 0)
-            result = sPos + (qint64)findPos;
-    }
-    return result;
-}
-
-bool Recorder::insert(qint64 pos, char b)
-{
-    if ((pos < 0) || (pos > _size))
+    if(!outFile.open(QIODevice::WriteOnly))
         return false;
-    int recordIdx;
-    if (pos == _size)
-        recordIdx = getRecordIndex(pos-1);
-    else
-        recordIdx = getRecordIndex(pos);
-    qint64 posInBa = pos - _records[recordIdx].absPos;
-    _records[recordIdx].data.insert(posInBa, b);
-    _records[recordIdx].dataChanged.insert(posInBa, char(1));
-    for (int idx=recordIdx+1; idx < _records.size(); idx++)
-        _records[idx].absPos += 1;
-    _size += 1;
-    _pos = pos;
+
+    if(file.endsWith(".kp"))
+    {
+        writer.setDevice(&outFile);
+        writer.writeStartDocument();
+        QFont curFont;
+        QString simText;
+        writer.writeStartElement(QString("KnockPadText"));
+        for(int i = 0; i < text->length(); ++i)
+        {
+            writer.writeStartElement(QString("line"));
+            writer.writeAttribute(QString("height"), QString(QString::number(text->at(i).height())));
+
+            if(!text->at(i).isEmpty())
+                curFont = text->at(i).at(0).font();
+
+            writer.writeStartElement(QString("font"));
+            add_font_attrs(curFont);
+
+            for(int j = 0; j < text->at(i).length(); ++j)
+            {
+                if(curFont != text->at(i).at(j).font())
+                {
+                    writer.writeCharacters(simText);
+                    writer.writeEndElement();
+                    simText = QString();
+
+                    curFont = text->at(i).at(j).font();
+                    writer.writeStartElement(QString("font"));
+                    add_font_attrs(curFont);
+                }
+                simText += text->at(i).at(j).value();
+            }
+            writer.writeCharacters(simText);
+            simText = QString();
+            writer.writeEndElement();
+            writer.writeEndElement();
+        }
+        writer.writeEndElement();
+        writer.writeEndDocument();
+    }
+    else if(file.endsWith(".txt"))
+    {
+        QTextStream outStream(&outFile);
+        for(int i = 0; i < text->length() - 1; ++i)
+        {
+            for(int j = 0; j < text->at(i).length(); ++j)
+                outStream << text->at(i).at(j).value();
+            outStream << '\n';
+        }
+        if(!text->at(text->length() - 1).isEmpty())
+            for(int j = 0; j < text->at(text->length() - 1).length(); ++j)
+                outStream << text->at(text->length() - 1).at(j).value();
+    }
+    outFile.close();
     return true;
 }
 
-bool Recorder::overwrite(qint64 pos, char b)
+void Recorder::add_font_attrs(const QFont& font)
 {
-    if ((pos < 0) || (pos >= _size))
-        return false;
-    int recordIdx = getRecordIndex(pos);
-    qint64 posInBa = pos - _records[recordIdx].absPos;
-    _records[recordIdx].data[(int)posInBa] = b;
-    _records[recordIdx].dataChanged[(int)posInBa] = char(1);
-    _pos = pos;
-    return true;
+    writer.writeAttribute(QString("family"), QString(font.family()));
+    writer.writeAttribute(QString("size"), QString(QString::number(font.pointSize())));
+    writer.writeAttribute(QString("bold"), QString( font.bold() ? "true" : "false" ));
+    writer.writeAttribute(QString("italic"), QString( font.italic() ? "true" : "false" ));
 }
 
-bool Recorder::removeAt(qint64 pos)
+void Recorder::add_similar_font_text(QXmlStreamAttributes attributes, QString text, Line& line)
 {
-    if ((pos < 0) || (pos >= _size))
-        return false;
-    int recordIdx = getRecordIndex(pos);
-    qint64 posInBa = pos - _records[recordIdx].absPos;
-    _records[recordIdx].data.remove(posInBa, 1);
-    _records[recordIdx].dataChanged.remove(posInBa, 1);
-    for (int idx=recordIdx+1; idx < _records.size(); idx++)
-        _records[idx].absPos -= 1;
-    _size -= 1;
-    _pos = pos;
-    return true;
-}
+    QString family = attributes[0].value().toString();
+    int size = attributes[1].value().toInt();
+    bool bold = attributes[2].value() == "true" ? true : false;
+    bool italic = attributes[3].value() == "true" ? true : false;
 
-char Recorder::operator[](qint64 pos)
-{
-    return getData(pos, 1)[0];
-}
+    QFont font = QFont(family, size, -1, italic);
+    font.setBold(bold);
 
-qint64 Recorder::pos()
-{
-    return _pos;
-}
-
-qint64 Recorder::size()
-{
-    return _size;
-}
-
-int Recorder::getRecordIndex(qint64 absPos)
-{
-    int foundIdx = -1;
-    int insertIdx = 0;
-    qint64 ioDelta = 0;
-
-
-    for (int idx = 0; idx < _records.size(); idx++)
-    {
-        Record record = _records[idx];
-        if ((absPos >= record.absPos) && (absPos < (record.absPos + record.data.size())))
-        {
-            foundIdx = idx;
-            break;
-        }
-        if (absPos < record.absPos)
-        {
-            insertIdx = idx;
-            break;
-        }
-        ioDelta += record.data.size() - 0x1000;
-        insertIdx = idx + 1;
+    foreach (QChar ch, text) {
+        line.push_back(Symbol(font, ch));
     }
-
-    if (foundIdx == -1)
-    {
-        Record newRecord;
-        qint64 readAbsPos = absPos - ioDelta;
-        qint64 readPos = (readAbsPos & Q_INT64_C(0xfffffffffffff000));
-        _ioDevice->open(QIODevice::ReadOnly);
-        _ioDevice->seek(readPos);
-        newRecord.data = _ioDevice->read(0x1000);
-        _ioDevice->close();
-        newRecord.absPos = absPos - (readAbsPos - readPos);
-        newRecord.dataChanged = QByteArray(newRecord.data.size(), char(0));
-        _records.insert(insertIdx, newRecord);
-        foundIdx = insertIdx;
-    }
-    return foundIdx;
 }

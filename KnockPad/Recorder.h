@@ -1,7 +1,18 @@
-#ifndef CARRIAGE_H
-#define CARRIAGE_H
+#ifndef RECORDER_H
+#define RECORDER_H
 
-#include <QtCore>
+#include <QtXml>
+#include <QIODevice>
+#include <QException>
+
+#include "Text.h"
+
+class FileOpenException: public QException
+{
+public:
+    void raise() const { throw *this; }
+    FileOpenException *clone() const { return new FileOpenException(*this); }
+};
 
 struct Record
 {
@@ -17,33 +28,18 @@ class Recorder: public QObject
 
 public:
     Recorder(QObject *parent = Q_NULLPTR);
-    Recorder(QIODevice &ioDevice, QObject *parent = Q_NULLPTR);
-    bool setIODevice(QIODevice &ioDevice);
 
-    QByteArray getData(qint64 pos = 0, qint64 count = -1, QByteArray *highlighted = 0);
-    bool write(QIODevice &iODevice, qint64 pos = 0, qint64 count = -1);
-
-    void setDataChanged(qint64 pos, bool dataChanged);
-    bool dataChanged(qint64 pos);
-
-    qint64 indexOf(const QByteArray &ba, qint64 from);
-    qint64 lastIndexOf(const QByteArray &ba, qint64 from);
-
-    bool insert(qint64 pos, char b);
-    bool overwrite(qint64 pos, char b);
-    bool removeAt(qint64 pos);
-
-    char operator[](qint64 pos);
-    qint64 pos();
-    qint64 size();
+    Text *read(QString file, QFont defFont);
+    bool write(const Text *text, QString file);
 
 private:
-    int getRecordIndex(qint64 absPos);
+    void add_font_attrs(const QFont& font);
+    void add_similar_font_text(QXmlStreamAttributes, QString text, Line&);
 
-    QIODevice * _ioDevice;
-    qint64 _pos;
-    qint64 _size;
-    QList<Record> _records;
+
+    QXmlStreamReader reader;
+    QXmlStreamWriter writer;
+
 };
 
 #endif

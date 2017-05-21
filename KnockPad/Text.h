@@ -4,12 +4,8 @@
 #include <QChar>
 #include <QFont>
 #include <QFontMetrics>
-#include <QObject>
 #include <QPainter>
 #include <QPoint>
-#include <QWidget>
-#include <QtGlobal>
-#include <QtCore>
 
 class Symbol;
 class Line;
@@ -89,6 +85,7 @@ public:
     int getSymbolBegin(int x, QPoint &pos) const;
     inline int getDifference(int s) const;
     Line getNewLine(int pos);
+    void draw(QPainter *painter, qint64 x, qint64 y) const;
 
     Symbol& operator[](int);
     const Symbol& at(int) const;
@@ -118,7 +115,10 @@ public:
     Text& operator=(const Text&);
     Line& operator[](int);
 
+    const Line& at(int) const;
+
     inline qint64 height() const { return height_; }
+    qint64 width() const;
     void recountHeight();
     inline int length() const { return content_.length(); }
 
@@ -139,7 +139,7 @@ public:
 
     QPoint getShiftByCoord(QPoint p, QPoint &pos) const;
     QPoint getShiftByPos(int x, int y, QPoint &pos) const;
-    void draw(QPainter *painter, QPoint edge);
+    qint64 draw(QPainter *painter, QPoint edge) const;
 
     void copyPart(Text* res, QPoint beginPos, QPoint endPos);
     void cutPart(Text* res, QPoint beginPos, QPoint endPos);

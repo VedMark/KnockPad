@@ -1,16 +1,28 @@
 ﻿#include "TextField.h"
 
-TextField::TextField(QString fontName, int fontSize, QWidget *parent)
+TextField::TextField(QFont f, QWidget *parent)
     : QAbstractScrollArea(parent)
 {
     field_ = new QWidget(this);
+
     setViewport(field_);
-    setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
-    setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
+    setHorizontalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setVerticalScrollBarPolicy(Qt::ScrollBarAsNeeded);
+    setSizeAdjustPolicy(QAbstractScrollArea::AdjustToContents);
+
+    verticalScrollBar()->setEnabled(true);
+    horizontalScrollBar()->setEnabled(true);
+    setMaximumSize(1368, 768);
+
+    width = 0;
+    field_->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+
+    connect(horizontalScrollBar(), SIGNAL( valueChanged(int) ), SLOT( moveHViewPort(int) ) );
+    connect(verticalScrollBar(), SIGNAL( valueChanged(int) ), SLOT( moveVViewPort(int) ) );
 
     edge_ = QPoint(5, 5);
 
-    setFont(QFont(fontName, fontSize));
+    setFont(f);
 
     highlightningColor_ = QColor(0xff, 0x66, 0x00);
     palette().highlight().color();
@@ -70,6 +82,23 @@ void TextField::changeBold(bool bold)
     setFont(f);
 }
 
+void TextField::moveHViewPort(int value)
+{
+    qint64 topLeftX = viewport()->rect().topLeft().x();
+
+    QSize s = viewport()->size();
+    viewport()->move(topLeftX - value, 0);
+    viewport()->update();
+}
+
+void TextField::moveVViewPort(int value)
+{
+    qint64 topLeftY = viewport()->rect().topLeft().y();
+
+    viewport()->move(0, topLeftY - value);
+    viewport()->update();
+}
+
 void TextField::changeItalics(bool it)
 {
     apply_font_func<bool>(&QFont::setItalic, it);
@@ -77,7 +106,6 @@ void TextField::changeItalics(bool it)
     f.setBold(font().bold());
     setFont(f);
 }
-
 
 void TextField::setTextEditorView(Qt::GlobalColor color)
 {
@@ -98,14 +126,11 @@ void TextField::clear()
     _set_cursor_points(p);
 }
 
-bool TextField::readFile(const QString &fileName)
-{
-    return true;
-}
-
-bool TextField::writeFile(const QString &fileName)
-{
-    return true;
+void TextField::setText(const Text* text) {
+    if(textLines_)
+        delete textLines_;
+    textLines_ = new Text(*text);
+    textLines_->setParent(this);
 }
 
 // Events
@@ -138,7 +163,8 @@ void TextField::keyPressEvent(QKeyEvent *event)
     else{
         if((event->key() >= 0x20 && event->key() <= 0x7E) ||
                (event->key() >= 0x410 && event->key() <= 0x42f) ||
-               (event->key() == 1000021)){
+               (event->key() == 1000021))
+        {
             if(isSelected())
                 _erase_highlighted_text();
 
@@ -150,6 +176,7 @@ void TextField::keyPressEvent(QKeyEvent *event)
             else if(QApplication::keyboardModifiers() == Qt::ShiftModifier)
                     if(capsLock())
                         in_char = in_char.toLower();
+
             textLines_->insert(curPos_.x(), curPos_.y(), Symbol(font(), in_char));
             p = textLines_->getShiftByPos(curPos_.x() + 1, curPos_.y(), pos);
         }
@@ -187,6 +214,7 @@ void TextField::keyPressEvent(QKeyEvent *event)
         setCurrentPos(pos);
      }
      _set_cursor_points(p);
+     resize_field(textLines_->height());
 }
 
 void TextField::mouseMoveEvent(QMouseEvent * event)
@@ -224,7 +252,45 @@ void TextField::paintEvent(QPaintEvent *)
     }
     else
         cursor_->draw(&painter, false);
-    textLines_->draw(&painter, edge_);
+    width = textLines_->draw(&painter, edge_);
+}
+
+void TextField::resizeEvent(QResizeEvent *)
+{
+    static int width = 0;
+    static int height = 0;
+
+    int marginX = 2 * edge_.x() + verticalScrollBar()->height();
+    int marginY = edge_.y() + 0.2 * horizontalScrollBar()->height();
+
+    int w = 0;
+    int h = 0;
+
+    if(width <= size().width()){
+        w = size().width();
+        width = w;
+    }
+    else{
+        width = viewport()->size().width();
+        w = width + marginX;
+    }
+
+    if(height  < size().height()){
+        h = size().height();
+        height = h;
+    }
+    else{
+        h = height + marginY;
+        height = h;
+    }
+    if(width != w || height != h){
+        field_->setFixedSize(w, h);
+    }
+
+    horizontalScrollBar()->setPageStep(viewport()->size().height());
+    verticalScrollBar()->setPageStep(viewport()->size().height());
+    horizontalScrollBar()->setRange(0, viewport()->size().width() - size().width());
+    verticalScrollBar()->setRange(0, viewport()->size().height() - size().height());
 }
 
 int TextField::getCurPosX() const
@@ -286,6 +352,19 @@ void TextField::selectAll()
                         curPos_));
 }
 
+void TextField::resize_field(qint64 h)
+{
+    if(width + 2 * edge_.x() < size().width())
+        width = size().width();
+    else
+        width = width + 2 * edge_.x() + verticalScrollBar()->width();
+    if(h + edge_.y() + 0.2 * size().height() < size().height())
+        h = size().height();
+    else
+        h += edge_.y() + 0.2 * size().height();
+    field_->setFixedSize(width, h);
+}
+
 QPoint TextField::_get_end_document()
 {
     Line* lasLine = &(*textLines_)[textLines_->length() - 1];
@@ -302,6 +381,7 @@ QPoint TextField::_handle_backspace()
     else{
         textLines_->eraseSymbol(curPos_.y(), curPos_.x(), pos);
     }
+    setCurrentPos(pos);
     p = textLines_->getShiftByPos(curPos_.x(), curPos_.y(), pos);
     setCurrentPos(pos);
     return p;

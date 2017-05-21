@@ -237,6 +237,18 @@ Line Line::getNewLine(int pos)
     return newLine;
 }
 
+void Line::draw(QPainter *painter, qint64 x, qint64 y) const
+{
+    foreach (const Symbol& symb, content_) {
+        QFont f = symb.font();
+        painter->setFont(symb.font());
+        painter->drawText(x,
+                  height() * 0.8 + y,
+                  symb.value());
+        x += symb.width();
+    }
+}
+
 void Line::raise_height(int h)
 {
     if(isEmpty())
@@ -305,6 +317,20 @@ Line& Text::operator[](int pos)
     return content_[pos];
 }
 
+const Line& Text::at(int pos) const
+{
+    return content_[pos];
+}
+
+qint64 Text::width() const
+{
+    int widthest = 0;
+    foreach (const Line& l, content_) {
+        if(l.getWidth() > widthest)
+            widthest = l.getWidth();
+    }
+    return widthest;
+}
 
 void Text::recountHeight() {
     int h = 0;
@@ -380,11 +406,12 @@ Symbol Text::getSymbol(int i, int j)
 void Text::eraseSymbol(int l, int s, QPoint& pos)
 {
     if(!s && l){
+        int _p = content_[l - 1].size();
         for(int i = 0; i < content_[l].length(); ++i)
             content_[l - 1].push_back(content_[l][i]);
         reduce_height(content_[l].height());
         content_.erase(content_.begin() + l);
-        pos = QPoint(content_[l - 1].size(), l - 1);
+        pos = QPoint(_p, l - 1);
         }
     else if(s){
         int h = content_[l].height();
@@ -516,21 +543,19 @@ QPoint Text::getShiftByPos(int x, int y, QPoint& pos) const
     return QPoint(X, Y);
 }
 
-void Text::draw(QPainter *painter, QPoint edge)
+qint64 Text::draw(QPainter *painter, QPoint edge) const
 {
     qint64 x = edge.x();
     qint64 y = edge.y();
-    for(int i = 0; i < content_.length(); ++i){
-        for(int j = 0; j < content_[i].length(); ++j){
-            painter->setFont(content_[i][j].font());
-            painter->drawText(x,
-                      content_[i].height() * 0.8 + y,
-                      content_[i][j].value());
-            x += content_[i][j].width();
-        }
+    int widthest = 0;
+    foreach (const Line& line, content_) {
+        if(line.getWidth() > widthest)
+            widthest = line.getWidth();
+        line.draw(painter, x, y);
         x = edge.x();
-        y += content_[i].height();
+        y += line.height();
     }
+    return widthest;
 }
 
 void Text::copyPart(Text* res, QPoint beginPos, QPoint endPos)

@@ -1,5 +1,5 @@
 #include "KnockPad.h"
-#include <QSizePolicy>
+
 
 int main(int argc, char *argv[])
 {

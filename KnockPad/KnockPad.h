@@ -13,13 +13,13 @@
 #include <QtGui>
 #include <QContextMenuEvent>
 #include <QMainWindow>
-#include <QStatusBar>
 
 
 #include "Menu.h"
 #include "EditToolBar.h"
 #include "StatusBar.h"
 #include "TextField.h"
+#include "Recorder.h"
 
 class KnockPad : public QMainWindow
 {
@@ -38,9 +38,6 @@ public slots:
 
     void closeApp();
 
-    void saveInCurrentFile();
-    void openRecentFile();
-
     void cutText();
     void copyText();
     void pasteText();
@@ -54,7 +51,6 @@ public slots:
 protected:
     void contextMenuEvent(QContextMenuEvent* pe);
     void closeEvent(QCloseEvent * closeEvent);
-    void resizeEvent(QResizeEvent *);
 
     void createStatusBar();
 
@@ -71,6 +67,10 @@ private:
     StatusBar *statusBar;
 
     TextField *textField;
+
+    Recorder fileRecorder;
+
+    QFont defaultFont;
 
     QString currentFileName;
     QTextEdit textEdit;
