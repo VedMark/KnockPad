@@ -49,16 +49,22 @@ Text* Recorder::read(QString file, QFont defFont)
     {
         int height = QFontMetrics(defFont).height();
         bool endsWithEmpty = true;
+        QTextCodec* codec = QTextCodec::codecForName("UTF-8");
+        QTextCodec::setCodecForLocale(codec);
+
         while(!inFile.atEnd())
         {
             Line line = Line(height, text);
             QByteArray byteLine = inFile.readLine();
+            QString t;
             if(byteLine.endsWith('\n')){
                 byteLine.remove(byteLine.length() - 1, 1);
                 endsWithEmpty = true;
             }
             else endsWithEmpty = false;
-            foreach (QChar s, byteLine) {
+            t = codec->toUnicode(byteLine);
+            foreach (const QChar& s, t) {
+
                 line.push_back(Symbol(defFont, s));
             }
             text->push_back(line);

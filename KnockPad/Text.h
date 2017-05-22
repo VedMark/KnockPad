@@ -29,24 +29,19 @@ public:
     inline void setBold(bool bold) { font_.setBold(bold); }
 
     inline const QFont& font() const { return font_; }
-    inline void setFont(const QFont& font) {
-        font_ = QFont(font);
-        delete fontMetrics_;
-        fontMetrics_ = new QFontMetrics(font_);
-    }
+    inline void setFont(const QFont& font) { font_ = QFont(font); }
 
     inline bool italic() const { return font_.italic(); }
     inline void setItalic(bool italic) { font_.setItalic(italic); }
 
-    inline qint64 height() const { return fontMetrics_->height(); }
-    inline qint64 width() const { return fontMetrics_->width(value_); }
+    inline qint64 height() const { return QFontMetrics(font_).height(); }
+    inline qint64 width() const { return QFontMetrics(font_).width(value_); }
 
     inline QChar value() const { return value_; }
     inline void setValue(QChar value) { value_ = value; }
 
 private:
     QFont font_;
-    QFontMetrics *fontMetrics_;
 
     QChar value_;
 };
@@ -88,7 +83,7 @@ public:
     void draw(QPainter *painter, qint64 x, qint64 y) const;
 
     Symbol& operator[](int);
-    const Symbol& at(int) const;
+    inline const Symbol& at(int pos) const { return content_[pos]; }
 
 private:
     void raise_height(int);
@@ -115,7 +110,7 @@ public:
     Text& operator=(const Text&);
     Line& operator[](int);
 
-    const Line& at(int) const;
+    inline const Line& at(int pos) const{ return content_[pos]; }
 
     inline qint64 height() const { return height_; }
     qint64 width() const;
@@ -139,7 +134,7 @@ public:
 
     QPoint getShiftByCoord(QPoint p, QPoint &pos) const;
     QPoint getShiftByPos(int x, int y, QPoint &pos) const;
-    qint64 draw(QPainter *painter, QPoint edge) const;
+    qint64 draw(QPainter *painter, QPoint curPos, QPoint edge) const;
 
     void copyPart(Text* res, QPoint beginPos, QPoint endPos);
     void cutPart(Text* res, QPoint beginPos, QPoint endPos);
@@ -160,8 +155,8 @@ public:
                 content_[begin.y()][j].setFont(f);
             }
 
-            for(int i = begin.y() + 1; i < end.y() - 1; ++i)
-                for(int j = begin.x(); j < end.x(); ++j)
+            for(int i = begin.y() + 1; i < end.y(); ++i)
+                for(int j = 0; j < content_[i].length(); ++j)
                 {
                     QFont f = content_[i][j].font();
                     (f.*func)(arg);

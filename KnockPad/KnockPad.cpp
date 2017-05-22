@@ -21,7 +21,7 @@ KnockPad::KnockPad() :
     setCentralWidget(textField);
     textField->setTextEditorView(Qt::white);
 
-    //setWindowIcon(QIcon(":/images/icon.png"));
+    setWindowIcon(QIcon(":/images/icon.png"));
     setCurrentFileName("");
 
     connect(menuComponents->newAction, SIGNAL( triggered() ), SLOT( newFile() ) );
@@ -43,7 +43,7 @@ KnockPad::KnockPad() :
     connect(menuComponents->fontBoldAction, SIGNAL( triggered() ), SLOT( setBoldText() ) );
     connect(menuComponents->fontItalicAction, SIGNAL( triggered() ), SLOT( setItalicText() ) );
 
-    connect(textField, SIGNAL( fontChanged(const QFont&)), editToolBar, SLOT( changeToolBarFonts(const QFont&) ));
+    connect(textField, SIGNAL( fontChanged(const QFont&) ), editToolBar, SLOT( changeToolBarFonts(const QFont&) ) );
 
     setWindowTitle(tr("KnockPad"));
 
@@ -217,14 +217,10 @@ void KnockPad::setItalicText()
 void KnockPad::setCurrentFileName(const QString &fileName)
 {
     currentFileName = fileName;
-    //textEdit.setModified(false);
 
     QString shownName;
     if(currentFileName.isEmpty())
         shownName = tr("untitled.txt");
     else
         shownName = QFileInfo(currentFileName).fileName();
-
-    //setWindowTitle(tr("%1[*] - %2").arg(shownName).arg(tr("Rich Text")));
-    //setWindowModified();
 }

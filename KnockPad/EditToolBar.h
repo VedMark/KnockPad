@@ -1,7 +1,6 @@
 #ifndef EDITTOOLBAR_H
 #define EDITTOOLBAR_H
 
-#include <QPushButton>
 #include <QComboBox>
 #include <QToolBar>
 #include <QSizePolicy>

@@ -14,7 +14,6 @@
 #include <QContextMenuEvent>
 #include <QMainWindow>
 
-
 #include "Menu.h"
 #include "EditToolBar.h"
 #include "StatusBar.h"

@@ -12,9 +12,6 @@ EditToolBar::EditToolBar(MenuComponents *components, QWidget *parent)
 
 EditToolBar::~EditToolBar()
 {
-    delete components;
-    delete fontBox;
-    delete sizeBox;
 }
 
 void EditToolBar::changeToolBarFonts(const QFont& f)
@@ -34,12 +31,19 @@ void EditToolBar::createToolBar()
 
     fontBox->addItems(components->getFontList());
     addWidget(fontBox);
-    fontBox->setCurrentText("Monospace");
+
+    #ifdef __linux__
+        fontBox->setCurrentText("Ubuntu");
+    #else
+    #ifdef __WIN32__
+        fontBox->setCurrentText("Serif");
+    #endif
+    #endif
 
     sizeBox->addItems(components->getFontSizeList());
     addWidget(sizeBox);
     sizeBox->setEditable(true);
-    sizeBox->setCurrentText("14");
+    sizeBox->setCurrentText("12");
 
     addAction(components->fontBoldAction);
     addAction(components->fontItalicAction);

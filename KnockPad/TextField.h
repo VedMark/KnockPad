@@ -19,7 +19,6 @@ class TextField : public QAbstractScrollArea
     Q_OBJECT
 
 public:
-    friend class Text;
 
     explicit TextField(QFont font, QWidget *parent = Q_NULLPTR);
     ~TextField();
@@ -54,6 +53,7 @@ public slots:
     void changeBold(bool bold);
     void moveHViewPort(int value);
     void moveVViewPort(int value);
+    void scrollViewport(QPoint pos);
 
 signals:
     void posChanged(QPoint);
@@ -85,7 +85,7 @@ private:
     }
 
 
-    void resize_field(qint64 h);
+    void resize_field(qint64 w, qint64 h);
     inline QPoint _get_end_document();
     inline void _change_positions(QPoint p);
 

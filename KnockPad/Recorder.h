@@ -4,6 +4,7 @@
 #include <QtXml>
 #include <QIODevice>
 #include <QException>
+#include <QTextCodec>
 
 #include "Text.h"
 

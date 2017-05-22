@@ -7,7 +7,6 @@ Symbol::Symbol()
     font_ = QFont(QString("Monospace"), 14);
     font_.setBold(false);
     font_.setItalic(false);
-    fontMetrics_ = new QFontMetrics(font_);
 }
 
 Symbol::Symbol(QChar value)
@@ -15,28 +14,24 @@ Symbol::Symbol(QChar value)
     font_ = QFont(QString("Monospace"), 14);
     font_.setBold(false);
     font_.setItalic(false);
-    fontMetrics_ = new QFontMetrics(font_);
     value_ = QChar(value);
 }
 
 Symbol::Symbol(const QFont &font, QChar value)
 {
     font_ = QFont(font);
-    fontMetrics_ = new QFontMetrics(font_);
     value_ = QChar(value);
 }
 
 Symbol::Symbol(const Symbol& symbol)
 {
     font_ = symbol.font_;
-    fontMetrics_ = symbol.fontMetrics_;
     value_ = symbol.value_;
 }
 
 Symbol& Symbol::operator=(const Symbol& symbol)
 {
     font_ = symbol.font_;
-    fontMetrics_ = symbol.fontMetrics_;
     value_ = symbol.value_;
     return *this;
 }
@@ -87,10 +82,6 @@ Symbol& Line::operator[](int pos)
     return content_[pos];
 }
 
-const Symbol& Line::at(int pos) const
-{
-    return content_[pos];
-}
 
 qint64 Line::getSymbShift(int s) const
 {
@@ -136,7 +127,6 @@ void Line::recountWidth() {
     }
     width_ = w;
 }
-
 
 Symbol Line::pop_front()
 {
@@ -317,10 +307,6 @@ Line& Text::operator[](int pos)
     return content_[pos];
 }
 
-const Line& Text::at(int pos) const
-{
-    return content_[pos];
-}
 
 qint64 Text::width() const
 {
@@ -543,12 +529,12 @@ QPoint Text::getShiftByPos(int x, int y, QPoint& pos) const
     return QPoint(X, Y);
 }
 
-qint64 Text::draw(QPainter *painter, QPoint edge) const
+qint64 Text::draw(QPainter *painter, QPoint curPos, QPoint edge) const
 {
     qint64 x = edge.x();
     qint64 y = edge.y();
     int widthest = 0;
-    foreach (const Line& line, content_) {
+    foreach(const Line& line, content_) {
         if(line.getWidth() > widthest)
             widthest = line.getWidth();
         line.draw(painter, x, y);
